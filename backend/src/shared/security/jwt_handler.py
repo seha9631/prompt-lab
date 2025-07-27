@@ -4,6 +4,7 @@ from jose import JWTError, jwt
 from pydantic import BaseModel
 
 from src.shared.logging import get_logger
+from src.shared.config.settings import settings
 
 logger = get_logger(__name__)
 
@@ -20,12 +21,10 @@ class TokenData(BaseModel):
 class JWTConfig:
     """JWT 설정"""
 
-    SECRET_KEY = (
-        "your-secret-key-here-change-in-production"  # 실제 운영에서는 환경변수로 관리
-    )
-    ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES = 6 * 60  # 6시간
-    REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7일
+    SECRET_KEY = settings.JWT_SECRET_KEY
+    ALGORITHM = settings.JWT_ALGORITHM
+    ACCESS_TOKEN_EXPIRE_MINUTES = settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+    REFRESH_TOKEN_EXPIRE_DAYS = settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
 
 
 class JWTHandler:

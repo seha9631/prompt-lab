@@ -4,30 +4,37 @@ DDD(Domain-Driven Design) 구조로 구성된 사용자 및 팀 관리 API
 
 ## 🚀 빠른 시작
 
-### 1. 데이터베이스 실행
+### 개발 환경
 
-#### 옵션 1: 매번 초기화 (기본)
+#### 1. 데이터베이스 실행
+
+##### 옵션 1: 전체 환경 (데이터 영속성 유지)
 
 ```bash
-# 기존 데이터를 완전히 삭제하고 매번 초기화
+# API 서버와 DB를 함께 실행 (데이터 영속성 유지)
 docker-compose up -d
 ```
 
-#### 옵션 2: 개발용 (데이터 영속성 유지)
+또는 자동 배포 스크립트 사용:
 
 ```bash
-# 개발 중에는 데이터를 유지
+./deploy-full.sh
+```
+
+##### 옵션 2: 개발용 (DB 매번 초기화)
+
+```bash
+# 개발 중에는 DB만 배포 (매번 초기화)
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-#### 옵션 3: 프로덕션용 (매번 초기화)
+또는 자동 배포 스크립트 사용:
 
 ```bash
-# 프로덕션에서는 매번 초기화
-docker-compose -f docker-compose.prod.yml up -d
+./deploy-dev.sh
 ```
 
-### 2. API 서버 실행
+#### 2. API 서버 실행
 
 ```bash
 cd backend
@@ -39,6 +46,38 @@ python main.py
 ```bash
 cd backend
 uvicorn main:app --reload
+```
+
+### 프로덕션 배포
+
+#### 1. 자동 배포 (권장)
+
+```bash
+# 배포 스크립트 실행
+./deploy.sh
+```
+
+#### 2. 수동 배포
+
+```bash
+# 환경변수 설정 (선택사항)
+export JWT_SECRET_KEY="your-secure-secret-key"
+
+# Docker Compose로 배포
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+#### 3. 배포 확인
+
+```bash
+# 서비스 상태 확인
+docker-compose -f docker-compose.prod.yml ps
+
+# 로그 확인
+docker-compose -f docker-compose.prod.yml logs -f api
+
+# 헬스체크
+curl http://localhost:8000/
 ```
 
 ## 📊 데이터베이스 초기화
@@ -77,9 +116,18 @@ prompt-lab/
 │   │       ├── response/           # 공통 응답
 │   │       └── web/                # 웹 설정
 │   └── main.py
-├── docker-compose.yml              # 기본 설정 (매번 초기화)
-├── docker-compose.dev.yml          # 개발용 (데이터 영속성)
-├── docker-compose.prod.yml         # 프로덕션용 (매번 초기화)
+├── backend/
+│   ├── Dockerfile                  # API 서버 Docker 이미지
+│   ├── .dockerignore               # Docker 빌드 제외 파일
+│   └── env.example                 # 환경변수 예시
+├── nginx/
+│   └── nginx.conf                  # Nginx 리버스 프록시 설정
+├── docker-compose.yml              # 기본 설정 (API 서버 + DB, 데이터 영속성)
+├── docker-compose.dev.yml          # 개발용 (DB만 배포, 매번 초기화)
+├── docker-compose.prod.yml         # 프로덕션용 (전체 서비스)
+├── deploy.sh                       # 프로덕션 자동 배포 스크립트
+├── deploy-full.sh                  # 전체 환경 자동 배포 스크립트 (API + DB, 데이터 영속성)
+├── deploy-dev.sh                   # 개발 DB 자동 배포 스크립트 (매번 초기화)
 └── init.sql                        # 데이터베이스 초기화 스크립트
 ```
 
@@ -114,6 +162,9 @@ prompt-lab/
 - **Email Validation**: Pydantic EmailStr
 - **Database**: PostgreSQL
 - **ORM**: SQLAlchemy
+- **Containerization**: Docker & Docker Compose
+- **Reverse Proxy**: Nginx
+- **Deployment**: Automated deployment script
 - **Architecture**: DDD (Domain-Driven Design)
 - **Container**: Docker & Docker Compose
 

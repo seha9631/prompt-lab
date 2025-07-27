@@ -1,10 +1,10 @@
 version: "3.8"
 
 services:
+  # PostgreSQL Database (로컬 연결용 - 데이터 영속성)
   postgres:
     image: postgres:15-alpine
     container_name: prompt_lab_postgres
-    restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -13,17 +13,48 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      # 매번 초기화 (볼륨 제거)
+      # 데이터 영속성 유지
+      - postgres_data:/var/lib/postgresql/data/pgdata
       - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    # 컨테이너 재시작 시 데이터 초기화를 위한 설정
-    command: >
-      postgres
-      -c fsync=off
-      -c synchronous_commit=off
-      -c full_page_writes=off
+
+  # FastAPI Application (로컬 DB 연결)
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: prompt_lab_api
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/prompt_lab
+      - JWT_SECRET_KEY=dev-secret-key-for-development
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=360
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+      - APP_NAME=Prompt Lab API
+      - APP_VERSION=1.0.0
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - HOST=0.0.0.0
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local

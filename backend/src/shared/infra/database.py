@@ -77,6 +77,6 @@ class DatabaseConnection:
 
 
 # 싱글톤 인스턴스
-db_connection = DatabaseConnection(
-    "postgresql://postgres:postgres@localhost:5433/prompt_lab"
-)
+from ..config.settings import settings
+
+db_connection = DatabaseConnection(settings.DATABASE_URL)
