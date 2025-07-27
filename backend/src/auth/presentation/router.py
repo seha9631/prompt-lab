@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 from src.shared.injector.container import app_container
 from src.shared.logging import get_logger
@@ -23,8 +23,12 @@ class CreateUserForTeamBody(BaseModel):
     """기존 팀에 사용자 추가 요청 Body (team_id 제외)"""
 
     name: str = Field(..., min_length=2, max_length=50, description="사용자 이름")
-    app_id: str = Field(..., min_length=3, max_length=50, description="앱 ID")
-    app_password: str = Field(..., min_length=8, description="앱 비밀번호")
+    app_id: EmailStr = Field(..., description="앱 ID (이메일 주소)")
+    app_password: str = Field(
+        ...,
+        min_length=8,
+        description="앱 비밀번호 (대문자, 소문자, 숫자, 특수문자 포함, 최소 8자)",
+    )
 
 
 @auth_router.post("/users")

@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 from src.shared.response import BaseResponse
 from ..service.user_management_service import UserManagementService
@@ -10,8 +10,12 @@ class CreateUserWithTeamRequest(BaseModel):
     """새 팀과 함께 사용자 생성 요청"""
 
     name: str = Field(..., min_length=2, max_length=50, description="사용자 이름")
-    app_id: str = Field(..., min_length=3, max_length=50, description="앱 ID")
-    app_password: str = Field(..., min_length=8, description="앱 비밀번호")
+    app_id: EmailStr = Field(..., description="앱 ID (이메일 주소)")
+    app_password: str = Field(
+        ...,
+        min_length=8,
+        description="앱 비밀번호 (대문자, 소문자, 숫자, 특수문자 포함, 최소 8자)",
+    )
     team_name: str = Field(..., min_length=2, max_length=50, description="팀 이름")
 
 
@@ -19,8 +23,12 @@ class CreateUserForTeamRequest(BaseModel):
     """기존 팀에 사용자 추가 요청"""
 
     name: str = Field(..., min_length=2, max_length=50, description="사용자 이름")
-    app_id: str = Field(..., min_length=3, max_length=50, description="앱 ID")
-    app_password: str = Field(..., min_length=8, description="앱 비밀번호")
+    app_id: EmailStr = Field(..., description="앱 ID (이메일 주소)")
+    app_password: str = Field(
+        ...,
+        min_length=8,
+        description="앱 비밀번호 (대문자, 소문자, 숫자, 특수문자 포함, 최소 8자)",
+    )
     team_id: str = Field(..., description="팀 ID (UUID)")
 
 
@@ -106,7 +114,7 @@ class CreateUserUseCase:
         앱 ID로 사용자 조회
 
         Args:
-            app_id: 앱 ID
+            app_id: 앱 ID (이메일)
 
         Returns:
             CreateUserResponse: 조회 결과
