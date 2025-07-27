@@ -1,12 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field, EmailStr
 
 from src.shared.injector.container import app_container
 from src.shared.logging import get_logger
+from src.shared.security.dependencies import get_current_user, require_owner_role
+from src.shared.security.jwt_handler import TokenData
 from src.shared.exception import (
     ValidationException,
     ResourceNotFoundException,
     DuplicateResourceException,
+    AuthenticationException,
+    UserNotActiveException,
+    TokenRefreshFailedException,
     ErrorCode,
 )
 from src.auth.application.usecase.create_user_usecase import (
@@ -17,6 +22,11 @@ from src.auth.application.usecase.create_user_usecase import (
 from src.auth.application.usecase.approve_user_usecase import (
     ApproveUserRequest,
     ApproveUserUseCase,
+)
+from src.auth.application.usecase.authentication_usecase import (
+    LoginRequest,
+    RefreshTokenRequest,
+    AuthenticationUseCase,
 )
 
 auth_router = APIRouter(tags=["auth"])
@@ -152,9 +162,18 @@ async def add_user_to_team(team_id: str, body: CreateUserForTeamBody):
 
 
 @auth_router.get("/users/{app_id}")
-async def get_user_by_app_id(app_id: str):
+async def get_user_by_app_id(
+    app_id: str, current_user: TokenData = Depends(get_current_user)
+):
     """앱 ID로 사용자 조회 (REST: GET /users/{app_id})"""
-    logger.info("Getting user by app_id", extra={"app_id": app_id})
+    logger.info(
+        "Getting user by app_id",
+        extra={
+            "app_id": app_id,
+            "requested_by": current_user.app_id,
+            "user_id": current_user.user_id,
+        },
+    )
 
     try:
         usecase: CreateUserUseCase = app_container.get_create_user_usecase()
@@ -186,13 +205,34 @@ async def get_user_by_app_id(app_id: str):
 
 
 @auth_router.patch("/users/{owner_user_id}/approve")
-async def approve_user(owner_user_id: str, request: ApproveUserRequest):
+async def approve_user(
+    owner_user_id: str,
+    request: ApproveUserRequest,
+    current_user: TokenData = Depends(require_owner_role),
+):
     """사용자 승인 (REST: PATCH /users/{owner_user_id}/approve)"""
+
+    # 토큰의 사용자 ID와 URL 파라미터의 owner_user_id가 일치하는지 확인
+    if current_user.user_id != owner_user_id:
+        logger.warning(
+            "Token user ID mismatch",
+            extra={
+                "token_user_id": current_user.user_id,
+                "url_owner_user_id": owner_user_id,
+                "app_id": current_user.app_id,
+            },
+        )
+        raise ValidationException(
+            message="토큰의 사용자 ID와 요청한 사용자 ID가 일치하지 않습니다"
+        )
+
     logger.info(
         "Approving user",
         extra={
             "owner_user_id": owner_user_id,
             "user_id_to_approve": request.user_id_to_approve,
+            "token_user_id": current_user.user_id,
+            "app_id": current_user.app_id,
         },
     )
 
@@ -247,5 +287,71 @@ async def approve_user(owner_user_id: str, request: ApproveUserRequest):
                 "user_id_to_approve": request.user_id_to_approve,
                 "error": str(e),
             },
+        )
+        raise
+
+
+@auth_router.post("/login")
+async def login(request: LoginRequest):
+    """로그인 (REST: POST /login)"""
+    logger.info("User login attempt", extra={"app_id": request.app_id})
+
+    try:
+        usecase: AuthenticationUseCase = app_container.get_authentication_usecase()
+        response = await usecase.login(request)
+
+        if not response.success:
+            logger.warning(
+                "Login failed",
+                extra={"app_id": request.app_id, "error": response.error},
+            )
+
+            # 에러 내용에 따라 적절한 예외 발생
+            if "이메일 또는 비밀번호" in response.error:
+                raise AuthenticationException(message=response.error)
+            elif "비활성화된 사용자" in response.error:
+                raise UserNotActiveException(message=response.error)
+            else:
+                raise HTTPException(status_code=400, detail=response.error)
+
+        logger.info("User logged in successfully", extra={"app_id": request.app_id})
+        return response
+
+    except Exception as e:
+        logger.error(
+            "Unexpected error during login",
+            extra={"app_id": request.app_id, "error": str(e)},
+        )
+        raise
+
+
+@auth_router.post("/refresh")
+async def refresh_token(request: RefreshTokenRequest):
+    """토큰 갱신 (REST: POST /refresh)"""
+    logger.info("Token refresh attempt")
+
+    try:
+        usecase: AuthenticationUseCase = app_container.get_authentication_usecase()
+        response = await usecase.refresh_token(request)
+
+        if not response.success:
+            logger.warning(
+                "Token refresh failed",
+                extra={"error": response.error},
+            )
+
+            # 에러 내용에 따라 적절한 예외 발생
+            if "토큰 갱신에 실패" in response.error or "다시 로그인" in response.error:
+                raise TokenRefreshFailedException(message=response.error)
+            else:
+                raise HTTPException(status_code=400, detail=response.error)
+
+        logger.info("Token refreshed successfully")
+        return response
+
+    except Exception as e:
+        logger.error(
+            "Unexpected error during token refresh",
+            extra={"error": str(e)},
         )
         raise

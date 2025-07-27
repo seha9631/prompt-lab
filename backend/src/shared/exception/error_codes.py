@@ -18,6 +18,9 @@ class ErrorCode(Enum):
     AUTHORIZATION_FAILED = ("E2002", "권한이 없습니다.")
     INVALID_CREDENTIALS = ("E2003", "잘못된 인증 정보입니다.")
     TOKEN_EXPIRED = ("E2004", "토큰이 만료되었습니다.")
+    INVALID_TOKEN = ("E2005", "유효하지 않은 토큰입니다.")
+    TOKEN_REFRESH_FAILED = ("E2006", "토큰 갱신에 실패했습니다.")
+    USER_NOT_ACTIVE = ("E2007", "비활성화된 사용자입니다.")
 
     # === 유효성 검증 에러 (3000번대) ===
     VALIDATION_ERROR = ("E3001", "유효성 검증에 실패했습니다.")

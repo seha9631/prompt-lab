@@ -52,6 +52,37 @@ class AuthorizationException(BusinessException):
         )
 
 
+class InvalidTokenException(BusinessException):
+    """유효하지 않은 토큰 예외"""
+
+    def __init__(self, message: Optional[str] = None, **kwargs):
+        if not message:
+            message = "유효하지 않은 토큰입니다."
+        super().__init__(error_code=ErrorCode.INVALID_TOKEN, message=message, **kwargs)
+
+
+class TokenRefreshFailedException(BusinessException):
+    """토큰 갱신 실패 예외"""
+
+    def __init__(self, message: Optional[str] = None, **kwargs):
+        if not message:
+            message = "토큰 갱신에 실패했습니다."
+        super().__init__(
+            error_code=ErrorCode.TOKEN_REFRESH_FAILED, message=message, **kwargs
+        )
+
+
+class UserNotActiveException(BusinessException):
+    """비활성화된 사용자 예외"""
+
+    def __init__(self, message: Optional[str] = None, **kwargs):
+        if not message:
+            message = "비활성화된 사용자입니다."
+        super().__init__(
+            error_code=ErrorCode.USER_NOT_ACTIVE, message=message, **kwargs
+        )
+
+
 class DuplicateResourceException(BusinessException):
     """중복 리소스 예외"""
 

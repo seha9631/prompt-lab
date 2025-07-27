@@ -6,6 +6,8 @@ from ...auth.domain.service.user_creation_service import UserCreationService
 from ...auth.application.service.user_management_service import UserManagementService
 from ...auth.application.usecase.create_user_usecase import CreateUserUseCase
 from ...auth.application.usecase.approve_user_usecase import ApproveUserUseCase
+from ...auth.application.usecase.authentication_usecase import AuthenticationUseCase
+from ...auth.application.service.authentication_service import AuthenticationService
 from ...auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
 from ...auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
 
@@ -65,6 +67,18 @@ class AppContainer:
         )
         self._services["approve_user_usecase"] = approve_user_usecase
 
+        # 7. 인증 서비스 및 UseCase
+        authentication_service = AuthenticationService(
+            user_repository_class=UserRepositoryImpl
+        )
+        self._services["authentication_service"] = authentication_service
+
+        authentication_usecase = AuthenticationUseCase(
+            authentication_service=authentication_service,
+            get_session_func=self._services["get_session"],
+        )
+        self._services["authentication_usecase"] = authentication_usecase
+
         self._initialized = True
 
     async def shutdown(self):
@@ -93,6 +107,9 @@ class AppContainer:
 
     def get_approve_user_usecase(self) -> ApproveUserUseCase:
         return self.get("approve_user_usecase")
+
+    def get_authentication_usecase(self) -> AuthenticationUseCase:
+        return self.get("authentication_usecase")
 
     def get_session_factory(self):
         """SQLAlchemy 세션 팩토리 반환"""

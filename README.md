@@ -85,11 +85,17 @@ prompt-lab/
 
 ## 🔧 API 엔드포인트
 
+### 인증
+
+- `POST /api/v1/login` - 로그인 (JWT 토큰 발급)
+- `POST /api/v1/refresh` - 액세스 토큰 갱신
+
 ### 사용자 관리
 
 - `POST /api/v1/users` - 새 팀과 함께 사용자 생성
 - `POST /api/v1/teams/{team_id}/users` - 기존 팀에 사용자 추가
-- `GET /api/v1/users/{app_id}` - 앱 ID로 사용자 조회
+- `GET /api/v1/users/{app_id}` - 앱 ID로 사용자 조회 (인증 필요)
+- `PATCH /api/v1/users/{owner_user_id}/approve` - 사용자 승인 (owner 권한 필요)
 
 ### 헬스체크
 
@@ -98,6 +104,9 @@ prompt-lab/
 ## 🛠️ 기술 스택
 
 - **Framework**: FastAPI
+- **Authentication**: JWT (JSON Web Tokens)
+- **Password Hashing**: bcrypt
+- **Email Validation**: Pydantic EmailStr
 - **Database**: PostgreSQL
 - **ORM**: SQLAlchemy
 - **Architecture**: DDD (Domain-Driven Design)
