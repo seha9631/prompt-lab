@@ -61,6 +61,7 @@ async def create_user_with_team(request: CreateUserWithTeamRequest):
             if (
                 "already exists" in response.error.lower()
                 or "이미 존재" in response.error
+                or "가 이미 존재합니다" in response.error
             ):
                 raise DuplicateResourceException(
                     resource_type="User",
@@ -124,6 +125,7 @@ async def add_user_to_team(team_id: str, body: CreateUserForTeamBody):
             elif (
                 "already exists" in response.error.lower()
                 or "이미 존재" in response.error
+                or "가 이미 존재합니다" in response.error
             ):
                 raise DuplicateResourceException(
                     resource_type="User",
@@ -183,27 +185,27 @@ async def get_user_by_app_id(app_id: str):
         raise
 
 
-@auth_router.patch("/users/{user_id}/approve")
-async def approve_user(user_id: str, request: ApproveUserRequest):
-    """사용자 승인 (REST: PATCH /users/{user_id}/approve)"""
+@auth_router.patch("/users/{owner_user_id}/approve")
+async def approve_user(owner_user_id: str, request: ApproveUserRequest):
+    """사용자 승인 (REST: PATCH /users/{owner_user_id}/approve)"""
     logger.info(
         "Approving user",
         extra={
-            "user_id": user_id,
-            "approver_app_id": request.approver_app_id,
+            "owner_user_id": owner_user_id,
+            "user_id_to_approve": request.user_id_to_approve,
         },
     )
 
     try:
         usecase: ApproveUserUseCase = app_container.get_approve_user_usecase()
-        response = await usecase.approve_user(user_id, request)
+        response = await usecase.approve_user(owner_user_id, request)
 
         if not response.success:
             logger.warning(
                 "User approval failed",
                 extra={
-                    "user_id": user_id,
-                    "approver_app_id": request.approver_app_id,
+                    "owner_user_id": owner_user_id,
+                    "user_id_to_approve": request.user_id_to_approve,
                     "error": response.error,
                 },
             )
@@ -211,11 +213,19 @@ async def approve_user(user_id: str, request: ApproveUserRequest):
             # 에러 내용에 따라 적절한 예외 발생
             if "not found" in response.error.lower() or "찾을 수 없" in response.error:
                 raise ResourceNotFoundException(
-                    resource_type="User", resource_id=user_id, message=response.error
+                    resource_type="User",
+                    resource_id=request.user_id_to_approve,
+                    message=response.error,
                 )
-            elif "only team owners" in response.error.lower():
+            elif (
+                "only team owners" in response.error.lower()
+                or "팀 소유자만" in response.error
+            ):
                 raise ValidationException(message=response.error)
-            elif "already active" in response.error.lower():
+            elif (
+                "already active" in response.error.lower()
+                or "이미 활성화" in response.error
+            ):
                 raise ValidationException(message=response.error)
             else:
                 raise HTTPException(status_code=400, detail=response.error)
@@ -223,8 +233,8 @@ async def approve_user(user_id: str, request: ApproveUserRequest):
         logger.info(
             "User approved successfully",
             extra={
-                "user_id": user_id,
-                "approver_app_id": request.approver_app_id,
+                "owner_user_id": owner_user_id,
+                "user_id_to_approve": request.user_id_to_approve,
             },
         )
         return response
@@ -233,8 +243,8 @@ async def approve_user(user_id: str, request: ApproveUserRequest):
         logger.error(
             "Unexpected error during user approval",
             extra={
-                "user_id": user_id,
-                "approver_app_id": request.approver_app_id,
+                "owner_user_id": owner_user_id,
+                "user_id_to_approve": request.user_id_to_approve,
                 "error": str(e),
             },
         )

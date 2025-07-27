@@ -8,6 +8,13 @@ from ...domain.service.user_creation_service import UserCreationService
 from ...domain.repository.user_repository import UserRepository
 from ...domain.repository.team_repository import TeamRepository
 from ...domain.value_object.app_credentials import AppId, AppPassword
+from ....shared.exception import (
+    ResourceNotFoundException,
+    UserApprovalException,
+    UserAlreadyActiveException,
+    InsufficientPermissionException,
+    TeamMismatchException,
+)
 
 
 class UserManagementService:
@@ -220,13 +227,13 @@ class UserManagementService:
                 ),
             }
 
-    async def approve_user(self, user_id: UUID, approver_app_id: str) -> dict:
+    async def approve_user(self, user_id: UUID, owner_user_id: UUID) -> dict:
         """
         사용자 승인 (owner만 가능)
 
         Args:
             user_id: 승인할 사용자 ID
-            approver_app_id: 승인하는 사용자의 앱 ID (owner 권한 확인용)
+            owner_user_id: 승인하는 owner의 사용자 ID
 
         Returns:
             dict: 승인된 사용자 정보
@@ -239,26 +246,43 @@ class UserManagementService:
                 # 1. 승인할 사용자 조회
                 user_to_approve = await user_repo.find_by_id(user_id)
                 if user_to_approve is None:
-                    raise ValueError(f"User with ID '{user_id}' not found")
+                    raise ResourceNotFoundException(
+                        resource_type="User",
+                        resource_id=str(user_id),
+                        message=f"ID '{user_id}'인 사용자를 찾을 수 없습니다",
+                    )
 
                 # 2. 승인하는 사용자 조회 (owner 권한 확인)
-                approver = await user_repo.find_by_app_id(approver_app_id)
+                approver = await user_repo.find_by_id(owner_user_id)
                 if approver is None:
-                    raise ValueError(
-                        f"Approver with app_id '{approver_app_id}' not found"
+                    raise ResourceNotFoundException(
+                        resource_type="User",
+                        resource_id=str(owner_user_id),
+                        message=f"ID '{owner_user_id}'인 승인자를 찾을 수 없습니다",
                     )
 
                 # 3. 승인하는 사용자가 owner인지 확인
                 if approver.role != "owner":
-                    raise ValueError("Only team owners can approve users")
+                    raise InsufficientPermissionException(
+                        message="팀 소유자만 사용자를 승인할 수 있습니다",
+                        required_role="owner",
+                        current_role=approver.role,
+                    )
 
                 # 4. 같은 팀인지 확인
                 if approver.team_id != user_to_approve.team_id:
-                    raise ValueError("Approver and user must be in the same team")
+                    raise TeamMismatchException(
+                        message="승인자와 사용자는 같은 팀에 속해야 합니다",
+                        user_team_id=str(user_to_approve.team_id),
+                        approver_team_id=str(approver.team_id),
+                    )
 
                 # 5. 승인할 사용자가 이미 활성화되어 있는지 확인
                 if user_to_approve.is_active:
-                    raise ValueError("User is already active")
+                    raise UserAlreadyActiveException(
+                        message="사용자가 이미 활성화되어 있습니다",
+                        user_id=str(user_id),
+                    )
 
                 # 6. 사용자 활성화
                 user_to_approve.activate()

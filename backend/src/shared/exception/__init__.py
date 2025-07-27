@@ -10,6 +10,10 @@ from .business_exception import (
     AuthorizationException,
     DuplicateResourceException,
     ResourceNotFoundException,
+    UserApprovalException,
+    UserAlreadyActiveException,
+    InsufficientPermissionException,
+    TeamMismatchException,
 )
 from .infrastructure_exception import (
     InfrastructureException,
@@ -26,6 +30,10 @@ __all__ = [
     "AuthorizationException",
     "DuplicateResourceException",
     "ResourceNotFoundException",
+    "UserApprovalException",
+    "UserAlreadyActiveException",
+    "InsufficientPermissionException",
+    "TeamMismatchException",
     "InfrastructureException",
     "DatabaseException",
     "ExternalServiceException",

@@ -4,6 +4,11 @@ from ..entity.user import User
 from ..entity.team import Team
 from ..repository.user_repository import UserRepository
 from ..repository.team_repository import TeamRepository
+from ....shared.exception import (
+    ResourceNotFoundException,
+    DuplicateResourceException,
+    ValidationException,
+)
 
 
 class UserCreationService:
@@ -43,7 +48,11 @@ class UserCreationService:
 
         # 1. 앱 ID 중복 확인
         if await self.user_repository.exists_by_app_id(app_id):
-            raise ValueError(f"App ID '{app_id}' already exists")
+            raise DuplicateResourceException(
+                resource_type="User",
+                resource_id=app_id,
+                message=f"앱 ID '{app_id}'가 이미 존재합니다",
+            )
 
         # 2. 케이스 분기
         if team_id is not None:
@@ -54,7 +63,9 @@ class UserCreationService:
         else:
             # 새 팀을 생성하는 경우
             if not team_name:
-                raise ValueError("Team name is required when creating a new team")
+                raise ValidationException(
+                    message="새 팀을 생성할 때는 팀 이름이 필요합니다"
+                )
 
             return await self._create_user_with_new_team(
                 name, app_id, app_password, team_name
@@ -68,11 +79,15 @@ class UserCreationService:
         # 1. 팀 존재 확인
         team = await self.team_repository.find_by_id(team_id)
         if team is None:
-            raise ValueError(f"Team with ID '{team_id}' not found")
+            raise ResourceNotFoundException(
+                resource_type="Team",
+                resource_id=str(team_id),
+                message=f"ID '{team_id}'인 팀을 찾을 수 없습니다",
+            )
 
         # 2. 팀이 활성화되어 있는지 확인
         if not team.is_active:
-            raise ValueError(f"Team '{team.name}' is not active")
+            raise ValidationException(message=f"팀 '{team.name}'이 비활성화 상태입니다")
 
         # 3. 'user' 권한으로 사용자 생성 (승인 대기 상태)
         user = User(
@@ -93,7 +108,11 @@ class UserCreationService:
 
         # 1. 팀 이름 중복 확인
         if await self.team_repository.exists_by_name(team_name):
-            raise ValueError(f"Team name '{team_name}' already exists")
+            raise DuplicateResourceException(
+                resource_type="Team",
+                resource_id=team_name,
+                message=f"팀 이름 '{team_name}'이 이미 존재합니다",
+            )
 
         # 2. 새 팀 생성
         team = Team(name=team_name)

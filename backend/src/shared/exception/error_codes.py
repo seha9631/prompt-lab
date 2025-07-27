@@ -34,6 +34,10 @@ class ErrorCode(Enum):
     USER_NOT_FOUND = ("E5001", "사용자를 찾을 수 없습니다.")
     USER_ALREADY_EXISTS = ("E5002", "이미 존재하는 사용자입니다.")
     INVALID_USER_DATA = ("E5003", "잘못된 사용자 데이터입니다.")
+    USER_APPROVAL_FAILED = ("E5004", "사용자 승인에 실패했습니다.")
+    USER_ALREADY_ACTIVE = ("E5005", "사용자가 이미 활성화되어 있습니다.")
+    INSUFFICIENT_PERMISSION = ("E5006", "권한이 부족합니다.")
+    TEAM_MISMATCH = ("E5007", "팀이 일치하지 않습니다.")
 
     # === 팀 관련 에러 (6000번대) ===
     TEAM_NOT_FOUND = ("E6001", "팀을 찾을 수 없습니다.")

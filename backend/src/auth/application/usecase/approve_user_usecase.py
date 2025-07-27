@@ -8,9 +8,7 @@ from ..service.user_management_service import UserManagementService
 class ApproveUserRequest(BaseModel):
     """사용자 승인 요청"""
 
-    approver_app_id: str = Field(
-        ..., description="승인하는 사용자의 앱 ID (owner 권한 확인용)"
-    )
+    user_id_to_approve: str = Field(..., description="승인받을 사용자의 ID")
 
 
 class ApproveUserResponse(BaseResponse[dict]):
@@ -32,13 +30,13 @@ class ApproveUserUseCase:
         self.user_management_service = user_management_service
 
     async def approve_user(
-        self, user_id: str, request: ApproveUserRequest
+        self, owner_user_id: str, request: ApproveUserRequest
     ) -> ApproveUserResponse:
         """
         사용자 승인
 
         Args:
-            user_id: 승인할 사용자 ID
+            owner_user_id: 승인하는 owner의 사용자 ID
             request: 승인 요청 데이터
 
         Returns:
@@ -46,12 +44,13 @@ class ApproveUserUseCase:
         """
         try:
             # UUID 변환
-            user_uuid = UUID(user_id)
+            owner_uuid = UUID(owner_user_id)
+            user_to_approve_uuid = UUID(request.user_id_to_approve)
 
             # 사용자 승인 서비스 호출
             result = await self.user_management_service.approve_user(
-                user_id=user_uuid,
-                approver_app_id=request.approver_app_id,
+                user_id=user_to_approve_uuid,
+                owner_user_id=owner_uuid,
             )
 
             return ApproveUserResponse.success_response(
