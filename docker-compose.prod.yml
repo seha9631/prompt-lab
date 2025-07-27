@@ -3,7 +3,7 @@ version: "3.8"
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: prompt_lab_postgres
+    container_name: prompt_lab_postgres_prod
     restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
@@ -13,7 +13,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      # 매번 초기화 (볼륨 제거)
+      # 프로덕션에서는 볼륨을 사용하지 않아 매번 초기화
       - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]

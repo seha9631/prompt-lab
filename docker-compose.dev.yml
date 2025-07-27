@@ -3,7 +3,7 @@ version: "3.8"
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: prompt_lab_postgres
+    container_name: prompt_lab_postgres_dev
     restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
@@ -13,7 +13,8 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      # 매번 초기화 (볼륨 제거)
+      # 개발 환경에서는 데이터 영속성 유지
+      - postgres_data:/var/lib/postgresql/data/pgdata
       - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -21,9 +22,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    # 컨테이너 재시작 시 데이터 초기화를 위한 설정
-    command: >
-      postgres
-      -c fsync=off
-      -c synchronous_commit=off
-      -c full_page_writes=off
+
+volumes:
+  postgres_data:
+    driver: local
