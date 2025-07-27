@@ -7,6 +7,7 @@ from ...auth.application.service.user_management_service import UserManagementSe
 from ...auth.application.usecase.create_user_usecase import CreateUserUseCase
 from ...auth.application.usecase.approve_user_usecase import ApproveUserUseCase
 from ...auth.application.usecase.authentication_usecase import AuthenticationUseCase
+from ...auth.application.usecase.team_management_usecase import TeamManagementUseCase
 from ...auth.application.service.authentication_service import AuthenticationService
 from ...auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
 from ...auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
@@ -79,6 +80,12 @@ class AppContainer:
         )
         self._services["authentication_usecase"] = authentication_usecase
 
+        # 8. 팀 관리 UseCase
+        team_management_usecase = TeamManagementUseCase(
+            user_management_service=user_management_service
+        )
+        self._services["team_management_usecase"] = team_management_usecase
+
         self._initialized = True
 
     async def shutdown(self):
@@ -110,6 +117,9 @@ class AppContainer:
 
     def get_authentication_usecase(self) -> AuthenticationUseCase:
         return self.get("authentication_usecase")
+
+    def get_team_management_usecase(self) -> TeamManagementUseCase:
+        return self.get("team_management_usecase")
 
     def get_session_factory(self):
         """SQLAlchemy 세션 팩토리 반환"""

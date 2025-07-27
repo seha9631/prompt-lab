@@ -14,6 +14,9 @@ from ....shared.exception import (
     UserAlreadyActiveException,
     InsufficientPermissionException,
     TeamMismatchException,
+    UserRoleChangeException,
+    LastOwnerProtectionException,
+    InvalidRoleException,
 )
 
 
@@ -315,6 +318,149 @@ class UserManagementService:
                         if team
                         else None
                     ),
+                }
+
+            except Exception as e:
+                await session.rollback()
+                raise e
+
+    async def get_team_users(self, team_id: UUID) -> list:
+        """
+        팀의 모든 사용자 조회
+        Args:
+            team_id: 팀 ID
+        Returns:
+            list: 팀의 모든 사용자 목록
+        """
+        async with self.get_session() as session:
+            try:
+                user_repo = self.user_repository_class(session)
+                team_repo = self.team_repository_class(session)
+
+                # 팀 존재 확인
+                team = await team_repo.find_by_id(team_id)
+                if team is None:
+                    raise ResourceNotFoundException(
+                        resource_type="Team",
+                        resource_id=str(team_id),
+                        message=f"ID '{team_id}'인 팀을 찾을 수 없습니다",
+                    )
+
+                # 팀의 모든 사용자 조회
+                users = await user_repo.find_by_team_id(team_id)
+
+                return [
+                    {
+                        "id": str(user.id),
+                        "name": user.name,
+                        "app_id": user.app_id,
+                        "role": user.role,
+                        "team_id": str(user.team_id),
+                        "is_active": user.is_active,
+                        "created_at": user.created_at.isoformat(),
+                        "updated_at": user.updated_at.isoformat(),
+                    }
+                    for user in users
+                ]
+
+            except Exception as e:
+                await session.rollback()
+                raise e
+
+    async def change_user_role(
+        self, target_user_id: UUID, new_role: str, owner_user_id: UUID
+    ) -> dict:
+        """
+        사용자 권한 변경 (owner만 가능)
+        Args:
+            target_user_id: 권한을 변경할 사용자 ID
+            new_role: 새로운 권한 (owner, user)
+            owner_user_id: 권한을 변경하는 owner의 사용자 ID
+        Returns:
+            dict: 변경된 사용자 정보
+        """
+        async with self.get_session() as session:
+            try:
+                user_repo = self.user_repository_class(session)
+
+                # 권한을 변경할 사용자 조회
+                target_user = await user_repo.find_by_id(target_user_id)
+                if target_user is None:
+                    raise ResourceNotFoundException(
+                        resource_type="User",
+                        resource_id=str(target_user_id),
+                        message=f"ID '{target_user_id}'인 사용자를 찾을 수 없습니다",
+                    )
+
+                # 권한을 변경하는 owner 조회
+                owner_user = await user_repo.find_by_id(owner_user_id)
+                if owner_user is None:
+                    raise ResourceNotFoundException(
+                        resource_type="User",
+                        resource_id=str(owner_user_id),
+                        message=f"ID '{owner_user_id}'인 승인자를 찾을 수 없습니다",
+                    )
+
+                # owner 권한 확인
+                if owner_user.role != "owner":
+                    raise InsufficientPermissionException(
+                        message="owner 권한만 사용자 권한을 변경할 수 있습니다",
+                        required_role="owner",
+                        current_role=owner_user.role,
+                    )
+
+                # 같은 팀인지 확인
+                if owner_user.team_id != target_user.team_id:
+                    raise TeamMismatchException(
+                        message="같은 팀의 사용자만 권한을 변경할 수 있습니다",
+                        user_team_id=str(target_user.team_id),
+                        approver_team_id=str(owner_user.team_id),
+                    )
+
+                # 유효한 권한인지 확인
+                if new_role not in ["owner", "user"]:
+                    raise InvalidRoleException(
+                        message=f"유효하지 않은 권한입니다: {new_role}",
+                        role=new_role,
+                    )
+
+                # 현재 권한과 같은지 확인
+                if target_user.role == new_role:
+                    raise UserRoleChangeException(
+                        message=f"사용자가 이미 '{new_role}' 권한을 가지고 있습니다",
+                        user_id=str(target_user_id),
+                        new_role=new_role,
+                    )
+
+                # 마지막 owner 보호 로직
+                if target_user.role == "owner" and new_role == "user":
+                    # 팀의 owner 수 확인
+                    team_owners = await user_repo.find_by_team_id_and_role(
+                        target_user.team_id, "owner"
+                    )
+                    if len(team_owners) <= 1:
+                        raise LastOwnerProtectionException(
+                            message="팀에 최소 하나의 owner가 필요합니다. 마지막 owner는 권한을 변경할 수 없습니다",
+                            user_id=str(target_user_id),
+                            team_id=str(target_user.team_id),
+                        )
+
+                # 권한 변경
+                target_user.change_role(new_role)
+                updated_user = await user_repo.update(target_user)
+                await session.commit()
+
+                return {
+                    "user": {
+                        "id": str(updated_user.id),
+                        "name": updated_user.name,
+                        "app_id": updated_user.app_id,
+                        "role": updated_user.role,
+                        "team_id": str(updated_user.team_id),
+                        "is_active": updated_user.is_active,
+                        "created_at": updated_user.created_at.isoformat(),
+                        "updated_at": updated_user.updated_at.isoformat(),
+                    }
                 }
 
             except Exception as e:

@@ -97,6 +97,11 @@ prompt-lab/
 - `GET /api/v1/users/{app_id}` - 앱 ID로 사용자 조회 (인증 필요)
 - `PATCH /api/v1/users/{owner_user_id}/approve` - 사용자 승인 (owner 권한 필요)
 
+### 팀 관리
+
+- `GET /api/v1/teams/{team_id}/users` - 팀의 모든 사용자 조회 (인증 필요)
+- `PATCH /api/v1/users/{owner_user_id}/role` - 사용자 권한 변경 (owner 권한 필요)
+
 ### 헬스체크
 
 - `GET /` - API 상태 확인

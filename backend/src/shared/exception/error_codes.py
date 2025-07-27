@@ -41,6 +41,9 @@ class ErrorCode(Enum):
     USER_ALREADY_ACTIVE = ("E5005", "사용자가 이미 활성화되어 있습니다.")
     INSUFFICIENT_PERMISSION = ("E5006", "권한이 부족합니다.")
     TEAM_MISMATCH = ("E5007", "팀이 일치하지 않습니다.")
+    USER_ROLE_CHANGE_FAILED = ("E5008", "사용자 권한 변경에 실패했습니다.")
+    LAST_OWNER_PROTECTION = ("E5009", "마지막 owner는 권한을 변경할 수 없습니다.")
+    INVALID_ROLE = ("E5010", "유효하지 않은 권한입니다.")
 
     # === 팀 관련 에러 (6000번대) ===
     TEAM_NOT_FOUND = ("E6001", "팀을 찾을 수 없습니다.")

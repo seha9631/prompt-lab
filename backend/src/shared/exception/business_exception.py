@@ -229,3 +229,74 @@ class TeamMismatchException(BusinessException):
             details=details,
             **{k: v for k, v in kwargs.items() if k != "details"},
         )
+
+
+class UserRoleChangeException(BusinessException):
+    """사용자 권한 변경 예외"""
+
+    def __init__(
+        self,
+        message: Optional[str] = None,
+        user_id: Optional[str] = None,
+        new_role: Optional[str] = None,
+        **kwargs,
+    ):
+        details = kwargs.get("details", {})
+        details.update({"user_id": user_id, "new_role": new_role})
+
+        if not message:
+            message = "사용자 권한 변경에 실패했습니다."
+
+        super().__init__(
+            error_code=ErrorCode.USER_ROLE_CHANGE_FAILED,
+            message=message,
+            details=details,
+            **{k: v for k, v in kwargs.items() if k != "details"},
+        )
+
+
+class LastOwnerProtectionException(BusinessException):
+    """마지막 owner 보호 예외"""
+
+    def __init__(
+        self,
+        message: Optional[str] = None,
+        user_id: Optional[str] = None,
+        team_id: Optional[str] = None,
+        **kwargs,
+    ):
+        details = kwargs.get("details", {})
+        details.update({"user_id": user_id, "team_id": team_id})
+
+        if not message:
+            message = "마지막 owner는 권한을 변경할 수 없습니다."
+
+        super().__init__(
+            error_code=ErrorCode.LAST_OWNER_PROTECTION,
+            message=message,
+            details=details,
+            **{k: v for k, v in kwargs.items() if k != "details"},
+        )
+
+
+class InvalidRoleException(BusinessException):
+    """유효하지 않은 권한 예외"""
+
+    def __init__(
+        self,
+        message: Optional[str] = None,
+        role: Optional[str] = None,
+        **kwargs,
+    ):
+        details = kwargs.get("details", {})
+        details.update({"role": role})
+
+        if not message:
+            message = "유효하지 않은 권한입니다."
+
+        super().__init__(
+            error_code=ErrorCode.INVALID_ROLE,
+            message=message,
+            details=details,
+            **{k: v for k, v in kwargs.items() if k != "details"},
+        )

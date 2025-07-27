@@ -12,6 +12,9 @@ from src.shared.exception import (
     AuthenticationException,
     UserNotActiveException,
     TokenRefreshFailedException,
+    UserRoleChangeException,
+    LastOwnerProtectionException,
+    InvalidRoleException,
     ErrorCode,
 )
 from src.auth.application.usecase.create_user_usecase import (
@@ -27,6 +30,10 @@ from src.auth.application.usecase.authentication_usecase import (
     LoginRequest,
     RefreshTokenRequest,
     AuthenticationUseCase,
+)
+from src.auth.application.usecase.team_management_usecase import (
+    ChangeUserRoleRequest,
+    TeamManagementUseCase,
 )
 
 auth_router = APIRouter(tags=["auth"])
@@ -285,6 +292,143 @@ async def approve_user(
             extra={
                 "owner_user_id": owner_user_id,
                 "user_id_to_approve": request.user_id_to_approve,
+                "error": str(e),
+            },
+        )
+        raise
+
+
+@auth_router.get("/teams/{team_id}/users")
+async def get_team_users(
+    team_id: str, current_user: TokenData = Depends(get_current_user)
+):
+    """팀의 모든 사용자 조회 (REST: GET /teams/{team_id}/users)"""
+    logger.info(
+        "Getting team users",
+        extra={
+            "team_id": team_id,
+            "requested_by": current_user.app_id,
+            "user_id": current_user.user_id,
+        },
+    )
+
+    try:
+        usecase: TeamManagementUseCase = app_container.get_team_management_usecase()
+        response = await usecase.get_team_users(team_id)
+
+        if not response.success:
+            logger.warning(
+                "Team users retrieval failed",
+                extra={"team_id": team_id, "error": response.error},
+            )
+
+            # 에러 내용에 따라 적절한 예외 발생
+            if "not found" in response.error.lower() or "찾을 수 없" in response.error:
+                raise ResourceNotFoundException(
+                    resource_type="Team", resource_id=team_id, message=response.error
+                )
+            else:
+                raise HTTPException(status_code=400, detail=response.error)
+
+        logger.info("Team users retrieved successfully", extra={"team_id": team_id})
+        return response
+
+    except Exception as e:
+        logger.error(
+            "Unexpected error during team users retrieval",
+            extra={"team_id": team_id, "error": str(e)},
+        )
+        raise
+
+
+@auth_router.patch("/users/{owner_user_id}/role")
+async def change_user_role(
+    owner_user_id: str,
+    request: ChangeUserRoleRequest,
+    current_user: TokenData = Depends(require_owner_role),
+):
+    """사용자 권한 변경 (REST: PATCH /users/{owner_user_id}/role)"""
+
+    # 토큰의 사용자 ID와 URL 파라미터의 owner_user_id가 일치하는지 확인
+    if current_user.user_id != owner_user_id:
+        logger.warning(
+            "Token user ID mismatch",
+            extra={
+                "token_user_id": current_user.user_id,
+                "url_owner_user_id": owner_user_id,
+                "app_id": current_user.app_id,
+            },
+        )
+        raise ValidationException(
+            message="토큰의 사용자 ID와 요청한 사용자 ID가 일치하지 않습니다"
+        )
+
+    logger.info(
+        "Changing user role",
+        extra={
+            "owner_user_id": owner_user_id,
+            "target_user_id": request.target_user_id,
+            "new_role": request.new_role,
+            "token_user_id": current_user.user_id,
+            "app_id": current_user.app_id,
+        },
+    )
+
+    try:
+        usecase: TeamManagementUseCase = app_container.get_team_management_usecase()
+        response = await usecase.change_user_role(owner_user_id, request)
+
+        if not response.success:
+            logger.warning(
+                "User role change failed",
+                extra={
+                    "owner_user_id": owner_user_id,
+                    "target_user_id": request.target_user_id,
+                    "new_role": request.new_role,
+                    "error": response.error,
+                },
+            )
+
+            # 에러 내용에 따라 적절한 예외 발생
+            if "not found" in response.error.lower() or "찾을 수 없" in response.error:
+                raise ResourceNotFoundException(
+                    resource_type="User",
+                    resource_id=request.target_user_id,
+                    message=response.error,
+                )
+            elif "권한이 부족" in response.error or "owner 권한만" in response.error:
+                raise InsufficientPermissionException(message=response.error)
+            elif "같은 팀" in response.error or "팀이 일치하지 않" in response.error:
+                raise TeamMismatchException(message=response.error)
+            elif "유효하지 않은 권한" in response.error:
+                raise InvalidRoleException(message=response.error)
+            elif (
+                "마지막 owner" in response.error
+                or "최소 하나의 owner" in response.error
+            ):
+                raise LastOwnerProtectionException(message=response.error)
+            elif "이미" in response.error and "권한을 가지고" in response.error:
+                raise UserRoleChangeException(message=response.error)
+            else:
+                raise HTTPException(status_code=400, detail=response.error)
+
+        logger.info(
+            "User role changed successfully",
+            extra={
+                "owner_user_id": owner_user_id,
+                "target_user_id": request.target_user_id,
+                "new_role": request.new_role,
+            },
+        )
+        return response
+
+    except Exception as e:
+        logger.error(
+            "Unexpected error during user role change",
+            extra={
+                "owner_user_id": owner_user_id,
+                "target_user_id": request.target_user_id,
+                "new_role": request.new_role,
                 "error": str(e),
             },
         )

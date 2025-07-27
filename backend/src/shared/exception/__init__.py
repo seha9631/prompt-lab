@@ -17,6 +17,9 @@ from .business_exception import (
     UserAlreadyActiveException,
     InsufficientPermissionException,
     TeamMismatchException,
+    UserRoleChangeException,
+    LastOwnerProtectionException,
+    InvalidRoleException,
 )
 from .infrastructure_exception import (
     InfrastructureException,
@@ -40,6 +43,9 @@ __all__ = [
     "UserAlreadyActiveException",
     "InsufficientPermissionException",
     "TeamMismatchException",
+    "UserRoleChangeException",
+    "LastOwnerProtectionException",
+    "InvalidRoleException",
     "InfrastructureException",
     "DatabaseException",
     "ExternalServiceException",

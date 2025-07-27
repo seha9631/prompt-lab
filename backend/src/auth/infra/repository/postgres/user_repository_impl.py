@@ -145,6 +145,18 @@ class UserRepositoryImpl(UserRepository):
 
         return count
 
+    async def find_by_team_id_and_role(self, team_id: UUID, role: str) -> List[User]:
+        """팀 ID와 권한으로 사용자 목록 조회"""
+        stmt = (
+            select(UserModel)
+            .where(UserModel.team_id == team_id, UserModel.role == role)
+            .order_by(UserModel.created_at.desc())
+        )
+        result = await self.session.execute(stmt)
+        user_models = result.scalars().all()
+
+        return [self._model_to_entity(model) for model in user_models]
+
     def _model_to_entity(self, model: UserModel) -> User:
         """SQLAlchemy 모델을 도메인 엔티티로 변환"""
         return User(
