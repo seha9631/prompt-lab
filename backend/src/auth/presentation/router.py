@@ -14,6 +14,10 @@ from src.auth.application.usecase.create_user_usecase import (
     CreateUserForTeamRequest,
     CreateUserUseCase,
 )
+from src.auth.application.usecase.approve_user_usecase import (
+    ApproveUserRequest,
+    ApproveUserUseCase,
+)
 
 auth_router = APIRouter(tags=["auth"])
 logger = get_logger(__name__)
@@ -175,5 +179,63 @@ async def get_user_by_app_id(app_id: str):
         logger.error(
             "Unexpected error during user retrieval",
             extra={"app_id": app_id, "error": str(e)},
+        )
+        raise
+
+
+@auth_router.patch("/users/{user_id}/approve")
+async def approve_user(user_id: str, request: ApproveUserRequest):
+    """사용자 승인 (REST: PATCH /users/{user_id}/approve)"""
+    logger.info(
+        "Approving user",
+        extra={
+            "user_id": user_id,
+            "approver_app_id": request.approver_app_id,
+        },
+    )
+
+    try:
+        usecase: ApproveUserUseCase = app_container.get_approve_user_usecase()
+        response = await usecase.approve_user(user_id, request)
+
+        if not response.success:
+            logger.warning(
+                "User approval failed",
+                extra={
+                    "user_id": user_id,
+                    "approver_app_id": request.approver_app_id,
+                    "error": response.error,
+                },
+            )
+
+            # 에러 내용에 따라 적절한 예외 발생
+            if "not found" in response.error.lower() or "찾을 수 없" in response.error:
+                raise ResourceNotFoundException(
+                    resource_type="User", resource_id=user_id, message=response.error
+                )
+            elif "only team owners" in response.error.lower():
+                raise ValidationException(message=response.error)
+            elif "already active" in response.error.lower():
+                raise ValidationException(message=response.error)
+            else:
+                raise HTTPException(status_code=400, detail=response.error)
+
+        logger.info(
+            "User approved successfully",
+            extra={
+                "user_id": user_id,
+                "approver_app_id": request.approver_app_id,
+            },
+        )
+        return response
+
+    except Exception as e:
+        logger.error(
+            "Unexpected error during user approval",
+            extra={
+                "user_id": user_id,
+                "approver_app_id": request.approver_app_id,
+                "error": str(e),
+            },
         )
         raise

@@ -219,3 +219,80 @@ class UserManagementService:
                     else None
                 ),
             }
+
+    async def approve_user(self, user_id: UUID, approver_app_id: str) -> dict:
+        """
+        사용자 승인 (owner만 가능)
+
+        Args:
+            user_id: 승인할 사용자 ID
+            approver_app_id: 승인하는 사용자의 앱 ID (owner 권한 확인용)
+
+        Returns:
+            dict: 승인된 사용자 정보
+        """
+        async with self.get_session() as session:
+            try:
+                user_repo = self.user_repository_class(session)
+                team_repo = self.team_repository_class(session)
+
+                # 1. 승인할 사용자 조회
+                user_to_approve = await user_repo.find_by_id(user_id)
+                if user_to_approve is None:
+                    raise ValueError(f"User with ID '{user_id}' not found")
+
+                # 2. 승인하는 사용자 조회 (owner 권한 확인)
+                approver = await user_repo.find_by_app_id(approver_app_id)
+                if approver is None:
+                    raise ValueError(
+                        f"Approver with app_id '{approver_app_id}' not found"
+                    )
+
+                # 3. 승인하는 사용자가 owner인지 확인
+                if approver.role != "owner":
+                    raise ValueError("Only team owners can approve users")
+
+                # 4. 같은 팀인지 확인
+                if approver.team_id != user_to_approve.team_id:
+                    raise ValueError("Approver and user must be in the same team")
+
+                # 5. 승인할 사용자가 이미 활성화되어 있는지 확인
+                if user_to_approve.is_active:
+                    raise ValueError("User is already active")
+
+                # 6. 사용자 활성화
+                user_to_approve.activate()
+                updated_user = await user_repo.update(user_to_approve)
+
+                # 7. 팀 정보 조회
+                team = await team_repo.find_by_id(updated_user.team_id)
+
+                # 8. 트랜잭션 커밋
+                await session.commit()
+
+                return {
+                    "user": {
+                        "id": str(updated_user.id),
+                        "name": updated_user.name,
+                        "app_id": updated_user.app_id,
+                        "role": updated_user.role,
+                        "team_id": str(updated_user.team_id),
+                        "is_active": updated_user.is_active,
+                        "created_at": updated_user.created_at.isoformat(),
+                        "updated_at": updated_user.updated_at.isoformat(),
+                    },
+                    "team": (
+                        {
+                            "id": str(team.id),
+                            "name": team.name,
+                            "payment": team.payment,
+                            "is_active": team.is_active,
+                        }
+                        if team
+                        else None
+                    ),
+                }
+
+            except Exception as e:
+                await session.rollback()
+                raise e
