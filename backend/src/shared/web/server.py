@@ -1,11 +1,13 @@
 import asyncio
 import uvicorn
 from .app import create_app
+from src.shared.logging import get_logger
 
 
 async def run_server():
     """서버 실행"""
-    print("🔥 Starting Prompt Lab API Server...")
+    logger = get_logger(__name__)
+    logger.info("🔥 Starting Prompt Lab API Server...")
 
     app = create_app()
 
