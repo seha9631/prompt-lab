@@ -8,9 +8,18 @@ from ...auth.application.usecase.create_user_usecase import CreateUserUseCase
 from ...auth.application.usecase.approve_user_usecase import ApproveUserUseCase
 from ...auth.application.usecase.authentication_usecase import AuthenticationUseCase
 from ...auth.application.usecase.team_management_usecase import TeamManagementUseCase
+from ...auth.application.usecase.credential_management_usecase import (
+    CredentialManagementUseCase,
+)
 from ...auth.application.service.authentication_service import AuthenticationService
 from ...auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
 from ...auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
+from ...auth.infra.repository.postgres.credential_repository_impl import (
+    CredentialRepositoryImpl,
+)
+from ...auth.infra.repository.postgres.source_repository_impl import (
+    SourceRepositoryImpl,
+)
 
 
 class AppContainer:
@@ -38,6 +47,8 @@ class AppContainer:
         # 3. Repository 클래스들 (PostgreSQL 구현체)
         self._services["user_repository_class"] = UserRepositoryImpl
         self._services["team_repository_class"] = TeamRepositoryImpl
+        self._services["credential_repository_class"] = CredentialRepositoryImpl
+        self._services["source_repository_class"] = SourceRepositoryImpl
 
         # 4. Domain Service 계층 (기본 인스턴스 - 필요시 재생성)
         # 실제로는 각 요청마다 새 세션으로 새 Repository를 만들어 사용
@@ -86,6 +97,15 @@ class AppContainer:
         )
         self._services["team_management_usecase"] = team_management_usecase
 
+        # 9. Credential 관리 UseCase
+        credential_management_usecase = CredentialManagementUseCase(
+            credential_repository_class=CredentialRepositoryImpl,
+            team_repository_class=TeamRepositoryImpl,
+            source_repository_class=SourceRepositoryImpl,
+            get_session_func=self._services["get_session"],
+        )
+        self._services["credential_management_usecase"] = credential_management_usecase
+
         self._initialized = True
 
     async def shutdown(self):
@@ -120,6 +140,9 @@ class AppContainer:
 
     def get_team_management_usecase(self) -> TeamManagementUseCase:
         return self.get("team_management_usecase")
+
+    def get_credential_management_usecase(self) -> CredentialManagementUseCase:
+        return self.get("credential_management_usecase")
 
     def get_session_factory(self):
         """SQLAlchemy 세션 팩토리 반환"""

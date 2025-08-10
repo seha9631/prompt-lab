@@ -50,6 +50,16 @@ class ErrorCode(Enum):
     TEAM_ALREADY_EXISTS = ("E6002", "이미 존재하는 팀입니다.")
     TEAM_MEMBER_LIMIT_EXCEEDED = ("E6003", "팀 멤버 수 제한을 초과했습니다.")
 
+    # === Credential 관련 에러 (6500번대) ===
+    CREDENTIAL_NOT_FOUND = ("E6501", "Credential을 찾을 수 없습니다.")
+    CREDENTIAL_ALREADY_EXISTS = ("E6502", "이미 존재하는 credential입니다.")
+    UNAUTHORIZED = ("E6503", "해당 리소스에 접근할 권한이 없습니다.")
+    ENCRYPTION_ERROR = ("E6504", "암호화/복호화 처리에 실패했습니다.")
+
+    # === Source 관련 에러 (6600번대) ===
+    SOURCE_NOT_FOUND = ("E6601", "소스를 찾을 수 없습니다.")
+    SOURCE_ALREADY_EXISTS = ("E6602", "이미 존재하는 소스입니다.")
+
     # === 데이터베이스 에러 (7000번대) ===
     DATABASE_CONNECTION_ERROR = ("E7001", "데이터베이스 연결에 실패했습니다.")
     DATABASE_QUERY_ERROR = ("E7002", "데이터베이스 쿼리 실행에 실패했습니다.")

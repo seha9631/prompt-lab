@@ -106,7 +106,9 @@ def create_app() -> FastAPI:
 
     # 라우터 등록
     from src.auth.presentation.router import auth_router
+    from src.auth.presentation.credential_router import router as credential_router
 
     app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(credential_router, prefix="/api/v1")
 
     return app

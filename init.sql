@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS "user" CASCADE;
 DROP TABLE IF EXISTS team CASCADE;
 DROP TABLE IF EXISTS source_model CASCADE;
 DROP TABLE IF EXISTS source CASCADE;
+DROP TABLE IF EXISTS credential CASCADE;
 
 -- pgcrypto 확장 설치 (UUID 생성용)
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -64,6 +65,17 @@ CREATE TABLE source_model (
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
 );
 
+-- credential 테이블 생성
+CREATE TABLE credential (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    team_id UUID NOT NULL REFERENCES team(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    source_id UUID NOT NULL REFERENCES source(id) ON DELETE CASCADE,
+    api_key TEXT NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
 -- ========================================
 -- 인덱스 생성 (성능 최적화)
 -- ========================================
@@ -74,6 +86,9 @@ CREATE INDEX idx_user_created_at ON "user"(created_at);
 CREATE INDEX idx_team_created_at ON team(created_at);
 CREATE INDEX idx_source_model_source_id ON source_model(source_id);
 CREATE INDEX idx_source_name ON source(name);
+CREATE INDEX idx_credential_team_id ON credential(team_id);
+CREATE INDEX idx_credential_source_id ON credential(source_id);
+CREATE INDEX idx_credential_name ON credential(name);
 
 -- ========================================
 -- 제약 조건 추가
@@ -86,6 +101,9 @@ ALTER TABLE team ADD CONSTRAINT uk_team_name UNIQUE (name);
 
 -- source 이름은 고유해야 함
 ALTER TABLE source ADD CONSTRAINT uk_source_name UNIQUE (name);
+
+-- 팀 내에서 credential 이름은 고유해야 함
+ALTER TABLE credential ADD CONSTRAINT uk_credential_team_name UNIQUE (team_id, name);
 
 -- ========================================
 -- 기본 데이터 삽입 (옵션)
@@ -106,4 +124,5 @@ ON CONFLICT (name) DO NOTHING;
 \echo '  - user'
 \echo '  - source'
 \echo '  - source_model'
+\echo '  - credential'
 \echo '========================================' 
