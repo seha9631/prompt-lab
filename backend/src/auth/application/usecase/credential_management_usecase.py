@@ -7,13 +7,13 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-from ...domain.entity.credential import Credential
-from ...domain.repository.credential_repository import CredentialRepository
-from ...domain.repository.team_repository import TeamRepository
-from ...domain.repository.source_repository import SourceRepository
-from ....shared.exception.business_exception import BusinessException
-from ....shared.exception.error_codes import ErrorCode
-from ....shared.security.encryption import EncryptionService
+from src.auth.domain.entity.credential import Credential
+from src.auth.domain.repository.credential_repository import CredentialRepository
+from src.auth.domain.repository.team_repository import TeamRepository
+from src.auth.domain.repository.source_repository import SourceRepository
+from src.shared.exception.business_exception import BusinessException
+from src.shared.exception.error_codes import ErrorCode
+from src.shared.security.encryption import EncryptionService
 
 
 class CredentialManagementUseCase:

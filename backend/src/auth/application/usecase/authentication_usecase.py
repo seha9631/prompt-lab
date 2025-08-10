@@ -1,7 +1,12 @@
+"""
+Authentication Use Case
+인증 비즈니스 로직
+"""
+
 from pydantic import BaseModel, Field, EmailStr
 
 from src.shared.response import BaseResponse
-from ..service.authentication_service import AuthenticationService
+from src.auth.application.service.authentication_service import AuthenticationService
 
 
 class LoginRequest(BaseModel):

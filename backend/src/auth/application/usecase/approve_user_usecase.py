@@ -1,8 +1,13 @@
+"""
+Approve User Use Case
+사용자 승인 비즈니스 로직
+"""
+
 from uuid import UUID
 from pydantic import BaseModel, Field
 
 from src.shared.response import BaseResponse
-from ..service.user_management_service import UserManagementService
+from src.auth.application.service.user_management_service import UserManagementService
 
 
 class ApproveUserRequest(BaseModel):

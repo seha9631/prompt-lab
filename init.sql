@@ -4,14 +4,6 @@
 -- 이 스크립트는 Docker 컨테이너 시작 시 실행됩니다.
 -- 기존 데이터를 완전히 삭제하고 새로운 데이터베이스를 초기화합니다.
 
--- 데이터베이스 생성 (PostgreSQL 문법)
--- PostgreSQL에서는 IF NOT EXISTS를 지원하지 않으므로 다른 방식 사용
-SELECT 'CREATE DATABASE prompt_lab'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'prompt_lab')\gexec
-
--- prompt_lab 데이터베이스에 연결
-\c prompt_lab;
-
 -- 기존 데이터 완전 삭제 (테이블이 존재하는 경우)
 DROP TABLE IF EXISTS "user" CASCADE;
 DROP TABLE IF EXISTS team CASCADE;

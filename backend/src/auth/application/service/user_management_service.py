@@ -1,14 +1,21 @@
+"""
+User Management Application Service
+사용자 관리 애플리케이션 서비스
+"""
+
 from uuid import UUID
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...domain.entity.user import User
-from ...domain.entity.team import Team
-from ...domain.service.user_creation_service import UserCreationService
-from ...domain.repository.user_repository import UserRepository
-from ...domain.repository.team_repository import TeamRepository
-from ...domain.value_object.app_credentials import AppId, AppPassword
-from ....shared.exception import (
+from src.auth.domain.entity.user import User
+from src.auth.domain.entity.team import Team
+from src.auth.domain.service.user_creation_service import UserCreationService
+from src.auth.domain.repository.user_repository import UserRepository
+from src.auth.domain.repository.team_repository import TeamRepository
+from src.auth.domain.value_object.app_credentials import AppId, AppPassword
+from src.shared.exception import (
+    ValidationException,
+    DuplicateResourceException,
     ResourceNotFoundException,
     UserApprovalException,
     UserAlreadyActiveException,

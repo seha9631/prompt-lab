@@ -1,13 +1,18 @@
+"""
+User Creation Domain Service
+사용자 생성 비즈니스 로직
+"""
+
 from uuid import UUID
 from typing import Optional, Tuple
-from ..entity.user import User
-from ..entity.team import Team
-from ..repository.user_repository import UserRepository
-from ..repository.team_repository import TeamRepository
-from ....shared.exception import (
-    ResourceNotFoundException,
-    DuplicateResourceException,
+from src.auth.domain.entity.user import User
+from src.auth.domain.entity.team import Team
+from src.auth.domain.repository.user_repository import UserRepository
+from src.auth.domain.repository.team_repository import TeamRepository
+from src.shared.exception import (
     ValidationException,
+    DuplicateResourceException,
+    ResourceNotFoundException,
 )
 
 

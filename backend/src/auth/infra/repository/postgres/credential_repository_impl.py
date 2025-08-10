@@ -1,18 +1,17 @@
 """
-PostgreSQL Credential Repository 구현체
-SQLAlchemy를 사용한 credential 데이터 영속성 구현
+Credential Repository PostgreSQL 구현체
 """
 
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ....domain.entity.credential import Credential
-from ....domain.repository.credential_repository import CredentialRepository
+from src.auth.domain.entity.credential import Credential
+from src.auth.domain.repository.credential_repository import CredentialRepository
 from src.shared.infra.models import CredentialModel
 
 

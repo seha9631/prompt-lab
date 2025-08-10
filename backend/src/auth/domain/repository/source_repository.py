@@ -1,13 +1,14 @@
 """
-Source Repository 인터페이스
-소스 정보의 영속성을 관리하는 추상 인터페이스
+Source Repository Interface
+Source 데이터 접근 인터페이스
 """
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from ..entity.source import Source
+from src.auth.domain.entity.source import Source
 
 
 class SourceRepository(ABC):

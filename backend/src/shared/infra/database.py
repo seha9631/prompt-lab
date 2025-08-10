@@ -1,3 +1,8 @@
+"""
+Database Connection Manager
+데이터베이스 연결 관리
+"""
+
 import asyncpg
 from databases import Database
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -77,6 +82,6 @@ class DatabaseConnection:
 
 
 # 싱글톤 인스턴스
-from ..config.settings import settings
+from src.shared.config.settings import settings
 
 db_connection = DatabaseConnection(settings.DATABASE_URL)

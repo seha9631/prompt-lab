@@ -1,23 +1,23 @@
 from databases import Database
 from typing import Dict, Any
 
-from ...shared.infra.database import db_connection
-from ...auth.domain.service.user_creation_service import UserCreationService
-from ...auth.application.service.user_management_service import UserManagementService
-from ...auth.application.usecase.create_user_usecase import CreateUserUseCase
-from ...auth.application.usecase.approve_user_usecase import ApproveUserUseCase
-from ...auth.application.usecase.authentication_usecase import AuthenticationUseCase
-from ...auth.application.usecase.team_management_usecase import TeamManagementUseCase
-from ...auth.application.usecase.credential_management_usecase import (
+from src.shared.infra.database import db_connection
+from src.auth.domain.service.user_creation_service import UserCreationService
+from src.auth.application.service.user_management_service import UserManagementService
+from src.auth.application.usecase.create_user_usecase import CreateUserUseCase
+from src.auth.application.usecase.approve_user_usecase import ApproveUserUseCase
+from src.auth.application.usecase.authentication_usecase import AuthenticationUseCase
+from src.auth.application.usecase.team_management_usecase import TeamManagementUseCase
+from src.auth.application.usecase.credential_management_usecase import (
     CredentialManagementUseCase,
 )
-from ...auth.application.service.authentication_service import AuthenticationService
-from ...auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
-from ...auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
-from ...auth.infra.repository.postgres.credential_repository_impl import (
+from src.auth.application.service.authentication_service import AuthenticationService
+from src.auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
+from src.auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
+from src.auth.infra.repository.postgres.credential_repository_impl import (
     CredentialRepositoryImpl,
 )
-from ...auth.infra.repository.postgres.source_repository_impl import (
+from src.auth.infra.repository.postgres.source_repository_impl import (
     SourceRepositoryImpl,
 )
 

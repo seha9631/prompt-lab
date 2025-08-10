@@ -1,13 +1,17 @@
+"""
+Team Repository PostgreSQL 구현체
+"""
+
 from uuid import UUID
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 from sqlalchemy.exc import IntegrityError
 
-from ....domain.entity.team import Team
-from ....domain.repository.team_repository import TeamRepository
-from .....shared.infra.models import TeamModel
-from .....shared.exception import DuplicateResourceException
+from src.auth.domain.entity.team import Team
+from src.auth.domain.repository.team_repository import TeamRepository
+from src.shared.infra.models import TeamModel
+from src.shared.exception import DuplicateResourceException
 
 
 class TeamRepositoryImpl(TeamRepository):

@@ -1,13 +1,17 @@
+"""
+User Repository PostgreSQL 구현체
+"""
+
 from uuid import UUID
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 from sqlalchemy.exc import IntegrityError
 
-from ....domain.entity.user import User
-from ....domain.repository.user_repository import UserRepository
-from .....shared.infra.models import UserModel
-from .....shared.exception import DuplicateResourceException
+from src.auth.domain.entity.user import User
+from src.auth.domain.repository.user_repository import UserRepository
+from src.shared.infra.models import UserModel
+from src.shared.exception import DuplicateResourceException
 
 
 class UserRepositoryImpl(UserRepository):
