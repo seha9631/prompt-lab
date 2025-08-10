@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from src.shared.injector.container import app_container
 from src.shared.security.dependencies import get_current_user
+from src.shared.security.jwt_handler import TokenData
 from src.shared.response.base_response import BaseResponse
 from src.shared.exception.business_exception import BusinessException
 from src.shared.exception.error_codes import ErrorCode
@@ -57,19 +58,19 @@ def get_credential_usecase():
 @router.post("/", response_model=BaseResponse[CredentialResponse])
 async def create_credential(
     request: CreateCredentialRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     usecase=Depends(get_credential_usecase),
 ):
     """새로운 credential을 생성합니다."""
     try:
         credential = await usecase.create_credential(
-            team_id=current_user["team_id"],
+            team_id=current_user.team_id,
             name=request.name,
             source_id=request.source_id,
             api_key=request.api_key,
         )
 
-        return BaseResponse.success(
+        return BaseResponse.success_response(
             data=CredentialResponse(
                 id=credential.id,
                 team_id=credential.team_id,
@@ -81,19 +82,21 @@ async def create_credential(
             message="Credential이 성공적으로 생성되었습니다.",
         )
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.dict)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.error_dict
+        )
 
 
 @router.get("/", response_model=BaseResponse[List[CredentialResponse]])
 async def get_credentials(
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     usecase=Depends(get_credential_usecase),
 ):
     """팀의 모든 credential을 조회합니다."""
     try:
-        credentials = await usecase.get_credentials_by_team(current_user["team_id"])
+        credentials = await usecase.get_credentials_by_team(current_user.team_id)
 
-        return BaseResponse.success(
+        return BaseResponse.success_response(
             data=[
                 CredentialResponse(
                     id=credential.id,
@@ -108,7 +111,9 @@ async def get_credentials(
             message="Credential 목록을 성공적으로 조회했습니다.",
         )
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.dict)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.error_dict
+        )
 
 
 @router.get(
@@ -116,16 +121,16 @@ async def get_credentials(
 )
 async def get_credentials_by_source(
     source_id: UUID,
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     usecase=Depends(get_credential_usecase),
 ):
     """특정 source의 credential을 조회합니다."""
     try:
         credentials = await usecase.get_credentials_by_source(
-            current_user["team_id"], source_id
+            current_user.team_id, source_id
         )
 
-        return BaseResponse.success(
+        return BaseResponse.success_response(
             data=[
                 CredentialResponse(
                     id=credential.id,
@@ -140,19 +145,21 @@ async def get_credentials_by_source(
             message="Source별 credential 목록을 성공적으로 조회했습니다.",
         )
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.dict)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.error_dict
+        )
 
 
 @router.get("/{credential_id}", response_model=BaseResponse[CredentialResponse])
 async def get_credential(
     credential_id: UUID,
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     usecase=Depends(get_credential_usecase),
 ):
     """특정 credential을 조회합니다."""
     try:
         credential = await usecase.get_credential_by_id(
-            credential_id, current_user["team_id"]
+            credential_id, current_user.team_id
         )
 
         if not credential:
@@ -161,7 +168,7 @@ async def get_credential(
                 detail=ErrorCode.CREDENTIAL_NOT_FOUND.dict,
             )
 
-        return BaseResponse.success(
+        return BaseResponse.success_response(
             data=CredentialResponse(
                 id=credential.id,
                 team_id=credential.team_id,
@@ -173,27 +180,29 @@ async def get_credential(
             message="Credential을 성공적으로 조회했습니다.",
         )
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.dict)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.error_dict
+        )
 
 
 @router.put("/{credential_id}", response_model=BaseResponse[CredentialResponse])
 async def update_credential(
     credential_id: UUID,
     request: UpdateCredentialRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     usecase=Depends(get_credential_usecase),
 ):
     """credential을 업데이트합니다."""
     try:
         credential = await usecase.update_credential(
             credential_id=credential_id,
-            team_id=current_user["team_id"],
+            team_id=current_user.team_id,
             name=request.name,
             source_id=request.source_id,
             api_key=request.api_key,
         )
 
-        return BaseResponse.success(
+        return BaseResponse.success_response(
             data=CredentialResponse(
                 id=credential.id,
                 team_id=credential.team_id,
@@ -205,20 +214,20 @@ async def update_credential(
             message="Credential이 성공적으로 업데이트되었습니다.",
         )
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.dict)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.error_dict
+        )
 
 
 @router.delete("/{credential_id}", response_model=BaseResponse[dict])
 async def delete_credential(
     credential_id: UUID,
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     usecase=Depends(get_credential_usecase),
 ):
     """credential을 삭제합니다."""
     try:
-        success = await usecase.delete_credential(
-            credential_id, current_user["team_id"]
-        )
+        success = await usecase.delete_credential(credential_id, current_user.team_id)
 
         if not success:
             raise HTTPException(
@@ -226,11 +235,13 @@ async def delete_credential(
                 detail=ErrorCode.CREDENTIAL_NOT_FOUND.dict,
             )
 
-        return BaseResponse.success(
+        return BaseResponse.success_response(
             data={"deleted": True}, message="Credential이 성공적으로 삭제되었습니다."
         )
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.dict)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.error_dict
+        )
 
 
 @router.post(
@@ -238,16 +249,18 @@ async def delete_credential(
 )
 async def decrypt_api_key(
     credential_id: UUID,
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     usecase=Depends(get_credential_usecase),
 ):
     """credential의 API 키를 복호화합니다."""
     try:
-        api_key = await usecase.decrypt_api_key(credential_id, current_user["team_id"])
+        api_key = await usecase.decrypt_api_key(credential_id, current_user.team_id)
 
-        return BaseResponse.success(
+        return BaseResponse.success_response(
             data=DecryptApiKeyResponse(api_key=api_key),
             message="API 키가 성공적으로 복호화되었습니다.",
         )
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.dict)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.error_dict
+        )
