@@ -15,6 +15,8 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'prompt_lab')\gexec
 -- 기존 데이터 완전 삭제 (테이블이 존재하는 경우)
 DROP TABLE IF EXISTS "user" CASCADE;
 DROP TABLE IF EXISTS team CASCADE;
+DROP TABLE IF EXISTS source_model CASCADE;
+DROP TABLE IF EXISTS source CASCADE;
 
 -- pgcrypto 확장 설치 (UUID 생성용)
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -46,6 +48,22 @@ CREATE TABLE "user" (
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
 );
 
+-- source 테이블 생성
+CREATE TABLE source (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+-- source_model 테이블 생성
+CREATE TABLE source_model (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    source_id UUID NOT NULL REFERENCES source(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
 -- ========================================
 -- 인덱스 생성 (성능 최적화)
 -- ========================================
@@ -54,6 +72,8 @@ CREATE INDEX idx_user_app_id ON "user"(app_id);
 CREATE INDEX idx_team_name ON team(name);
 CREATE INDEX idx_user_created_at ON "user"(created_at);
 CREATE INDEX idx_team_created_at ON team(created_at);
+CREATE INDEX idx_source_model_source_id ON source_model(source_id);
+CREATE INDEX idx_source_name ON source(name);
 
 -- ========================================
 -- 제약 조건 추가
@@ -63,6 +83,9 @@ ALTER TABLE "user" ADD CONSTRAINT uk_user_app_id UNIQUE (app_id);
 
 -- 팀 이름은 고유해야 함
 ALTER TABLE team ADD CONSTRAINT uk_team_name UNIQUE (name);
+
+-- source 이름은 고유해야 함
+ALTER TABLE source ADD CONSTRAINT uk_source_name UNIQUE (name);
 
 -- ========================================
 -- 기본 데이터 삽입 (옵션)
@@ -81,4 +104,6 @@ ON CONFLICT (name) DO NOTHING;
 \echo 'Tables created:'
 \echo '  - team'
 \echo '  - user'
+\echo '  - source'
+\echo '  - source_model'
 \echo '========================================' 

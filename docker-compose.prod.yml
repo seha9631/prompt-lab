@@ -11,7 +11,8 @@ services:
       POSTGRES_PASSWORD: prompt_lab_password
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./seed_data.sql:/docker-entrypoint-initdb.d/02-seed_data.sql:ro
     ports:
       - "5432:5432"
     networks:

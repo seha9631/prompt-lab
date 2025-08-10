@@ -15,6 +15,7 @@ services:
     volumes:
       # 개발 환경에서는 매번 초기화 (볼륨 제거)
       - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./seed_data.sql:/docker-entrypoint-initdb.d/02-seed_data.sql:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]

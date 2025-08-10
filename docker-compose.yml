@@ -16,6 +16,7 @@ services:
       # 데이터 영속성 유지
       - postgres_data:/var/lib/postgresql/data/pgdata
       - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./seed_data.sql:/docker-entrypoint-initdb.d/02-seed_data.sql:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
