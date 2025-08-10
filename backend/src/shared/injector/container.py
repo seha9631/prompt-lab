@@ -11,6 +11,9 @@ from src.auth.application.usecase.team_management_usecase import TeamManagementU
 from src.auth.application.usecase.credential_management_usecase import (
     CredentialManagementUseCase,
 )
+from src.auth.application.usecase.source_management_usecase import (
+    SourceManagementUseCase,
+)
 from src.auth.application.service.authentication_service import AuthenticationService
 from src.auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
 from src.auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
@@ -19,6 +22,9 @@ from src.auth.infra.repository.postgres.credential_repository_impl import (
 )
 from src.auth.infra.repository.postgres.source_repository_impl import (
     SourceRepositoryImpl,
+)
+from src.auth.infra.repository.postgres.source_model_repository_impl import (
+    SourceModelRepositoryImpl,
 )
 
 
@@ -49,6 +55,7 @@ class AppContainer:
         self._services["team_repository_class"] = TeamRepositoryImpl
         self._services["credential_repository_class"] = CredentialRepositoryImpl
         self._services["source_repository_class"] = SourceRepositoryImpl
+        self._services["source_model_repository_class"] = SourceModelRepositoryImpl
 
         # 4. Domain Service 계층 (기본 인스턴스 - 필요시 재생성)
         # 실제로는 각 요청마다 새 세션으로 새 Repository를 만들어 사용
@@ -106,6 +113,14 @@ class AppContainer:
         )
         self._services["credential_management_usecase"] = credential_management_usecase
 
+        # 10. Source 관리 UseCase
+        source_management_usecase = SourceManagementUseCase(
+            source_repository_class=SourceRepositoryImpl,
+            source_model_repository_class=SourceModelRepositoryImpl,
+            get_session_func=self._services["get_session"],
+        )
+        self._services["source_management_usecase"] = source_management_usecase
+
         self._initialized = True
 
     async def shutdown(self):
@@ -143,6 +158,9 @@ class AppContainer:
 
     def get_credential_management_usecase(self) -> CredentialManagementUseCase:
         return self.get("credential_management_usecase")
+
+    def get_source_management_usecase(self) -> SourceManagementUseCase:
+        return self.get("source_management_usecase")
 
     def get_session_factory(self):
         """SQLAlchemy 세션 팩토리 반환"""
