@@ -109,7 +109,7 @@ class LLMManagementService:
 
             # LLM 실행
             result = await llm_execution_service.execute_llm_request(
-                llm_request, credential_name
+                llm_request, credential_name, self.upload_dir
             )
 
             # 성공 상태로 업데이트
@@ -172,10 +172,16 @@ class LLMManagementService:
         finally:
             await session.close()
 
-    def save_uploaded_file(self, file_content: bytes, filename: str) -> str:
+    def save_uploaded_file(
+        self, file_content: bytes, filename: str, team_id: str
+    ) -> str:
         """업로드된 파일을 저장하고 파일명을 반환합니다."""
+        # 팀별 폴더 생성
+        team_upload_dir = os.path.join(self.upload_dir, team_id)
+        os.makedirs(team_upload_dir, exist_ok=True)
+
         # 원본 파일명 그대로 사용
-        file_path = os.path.join(self.upload_dir, filename)
+        file_path = os.path.join(team_upload_dir, filename)
 
         with open(file_path, "wb") as f:
             f.write(file_content)

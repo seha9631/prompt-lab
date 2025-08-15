@@ -30,7 +30,7 @@ class LLMExecutionService:
         self.source_repository = source_repository
 
     async def execute_llm_request(
-        self, llm_request: LLMRequest, credential_name: str
+        self, llm_request: LLMRequest, credential_name: str, upload_dir: str = "uploads"
     ) -> str:
         """
         LLM 요청을 실행합니다.
@@ -74,7 +74,9 @@ class LLMExecutionService:
 
             # 4. LLM 실행
             if source.name.lower() == "openai":
-                return await self._execute_openai_request(llm_request, api_key)
+                return await self._execute_openai_request(
+                    llm_request, api_key, upload_dir
+                )
             else:
                 raise BusinessException(
                     error_code=ErrorCode.UNSUPPORTED_API_SOURCE,
@@ -91,7 +93,7 @@ class LLMExecutionService:
             )
 
     async def _execute_openai_request(
-        self, llm_request: LLMRequest, api_key: str
+        self, llm_request: LLMRequest, api_key: str, upload_dir: str = "uploads"
     ) -> str:
         """OpenAI API를 사용하여 LLM 요청을 실행합니다."""
         import httpx
@@ -102,18 +104,28 @@ class LLMExecutionService:
         # 파일이 있는 경우 파일 내용을 메시지에 추가
         if llm_request.file_paths:
             file_contents = []
+            logger.info(f"파일 참조 시작: {llm_request.file_paths}")
             for filename in llm_request.file_paths:
                 try:
-                    # uploads 디렉토리 경로 구성
-                    file_path = os.path.join("uploads", filename)
+                    # 팀별 uploads 디렉토리 경로 구성
+                    team_upload_dir = os.path.join(upload_dir, str(llm_request.team_id))
+                    file_path = os.path.join(team_upload_dir, filename)
+                    logger.info(f"파일 경로: {file_path}")
+
                     with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
+                        logger.info(
+                            f"파일 내용 읽기 성공: {filename}, 내용 길이: {len(content)}"
+                        )
                         file_contents.append(f"파일: {filename}\n내용:\n{content}")
                 except Exception as e:
-                    logger.warning(f"파일 읽기 실패: {filename}, 오류: {str(e)}")
+                    logger.error(
+                        f"파일 읽기 실패: {filename}, 경로: {file_path}, 오류: {str(e)}"
+                    )
 
             if file_contents:
                 file_content = "\n\n".join(file_contents)
+                logger.info(f"AI Assistant에 전달할 파일 내용: {file_content}")
                 messages.append(
                     {
                         "role": "user",

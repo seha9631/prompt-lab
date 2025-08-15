@@ -84,7 +84,9 @@ async def upload_file(
 
         # LLM 관리 서비스를 통해 파일 저장
         llm_service = app_container.get_llm_management_service()
-        file_path = llm_service.save_uploaded_file(file_content, file.filename)
+        file_path = llm_service.save_uploaded_file(
+            file_content, file.filename, str(current_user.team_id)
+        )
 
         logger.info(
             "파일 업로드 성공",
