@@ -5,6 +5,8 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     UUID as SQLAlchemyUUID,
+    Text,
+    ARRAY,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -111,3 +113,33 @@ class CredentialModel(Base):
     # 관계 설정
     team = relationship("TeamModel")
     source = relationship("SourceModel", back_populates="credentials")
+
+
+class LLMRequestModel(Base):
+    """LLM 요청 SQLAlchemy 모델"""
+
+    __tablename__ = "llm_request"
+
+    id = Column(SQLAlchemyUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    team_id = Column(
+        SQLAlchemyUUID(as_uuid=True), ForeignKey("team.id"), nullable=False
+    )
+    user_id = Column(
+        SQLAlchemyUUID(as_uuid=True), ForeignKey("user.id"), nullable=False
+    )
+    prompt = Column(String, nullable=False)
+    model_name = Column(String, nullable=False)
+    file_paths = Column(ARRAY(String), nullable=False, default=[])
+    status = Column(
+        String, nullable=False, default="pending"
+    )  # pending, processing, completed, failed
+    result = Column(Text, nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+
+    # 관계 설정
+    team = relationship("TeamModel")
+    user = relationship("UserModel")

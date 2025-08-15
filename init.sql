@@ -68,6 +68,21 @@ CREATE TABLE credential (
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
 );
 
+-- llm_request 테이블 생성
+CREATE TABLE llm_request (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    team_id UUID NOT NULL REFERENCES team(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    prompt TEXT NOT NULL,
+    model_name VARCHAR(100) NOT NULL,
+    file_paths TEXT[] NOT NULL DEFAULT '{}',
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    result TEXT,
+    error_message TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
 -- ========================================
 -- 인덱스 생성 (성능 최적화)
 -- ========================================
@@ -81,6 +96,10 @@ CREATE INDEX idx_source_name ON source(name);
 CREATE INDEX idx_credential_team_id ON credential(team_id);
 CREATE INDEX idx_credential_source_id ON credential(source_id);
 CREATE INDEX idx_credential_name ON credential(name);
+CREATE INDEX idx_llm_request_team_id ON llm_request(team_id);
+CREATE INDEX idx_llm_request_user_id ON llm_request(user_id);
+CREATE INDEX idx_llm_request_status ON llm_request(status);
+CREATE INDEX idx_llm_request_created_at ON llm_request(created_at);
 
 -- ========================================
 -- 제약 조건 추가
@@ -117,4 +136,5 @@ ON CONFLICT (name) DO NOTHING;
 \echo '  - source'
 \echo '  - source_model'
 \echo '  - credential'
+\echo '  - llm_request'
 \echo '========================================' 

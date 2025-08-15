@@ -91,3 +91,6 @@ dmypy.json
 
 .vscode/
 .cursor/
+
+
+uploads/

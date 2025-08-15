@@ -14,6 +14,8 @@ from src.auth.application.usecase.credential_management_usecase import (
 from src.auth.application.usecase.source_management_usecase import (
     SourceManagementUseCase,
 )
+from src.llm.application.service.llm_management_service import LLMManagementService
+from src.llm.application.usecase.llm_management_usecase import LLMManagementUseCase
 from src.auth.application.service.authentication_service import AuthenticationService
 from src.auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
 from src.auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
@@ -25,6 +27,9 @@ from src.auth.infra.repository.postgres.source_repository_impl import (
 )
 from src.auth.infra.repository.postgres.source_model_repository_impl import (
     SourceModelRepositoryImpl,
+)
+from src.llm.infra.repository.postgres.llm_request_repository_impl import (
+    LLMRequestRepositoryImpl,
 )
 
 
@@ -121,6 +126,21 @@ class AppContainer:
         )
         self._services["source_management_usecase"] = source_management_usecase
 
+        # 11. LLM 관리 서비스 및 UseCase
+        llm_management_service = LLMManagementService(
+            llm_request_repository_class=LLMRequestRepositoryImpl,
+            credential_repository_class=CredentialRepositoryImpl,
+            source_repository_class=SourceRepositoryImpl,
+            get_session_func=self._services["get_session"],
+            upload_dir="uploads",
+        )
+        self._services["llm_management_service"] = llm_management_service
+
+        llm_management_usecase = LLMManagementUseCase(
+            llm_management_service=llm_management_service
+        )
+        self._services["llm_management_usecase"] = llm_management_usecase
+
         self._initialized = True
 
     async def shutdown(self):
@@ -161,6 +181,12 @@ class AppContainer:
 
     def get_source_management_usecase(self) -> SourceManagementUseCase:
         return self.get("source_management_usecase")
+
+    def get_llm_management_service(self) -> LLMManagementService:
+        return self.get("llm_management_service")
+
+    def get_llm_management_usecase(self) -> LLMManagementUseCase:
+        return self.get("llm_management_usecase")
 
     def get_session_factory(self):
         """SQLAlchemy 세션 팩토리 반환"""
