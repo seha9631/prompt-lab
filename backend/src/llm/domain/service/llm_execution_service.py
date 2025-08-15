@@ -4,6 +4,7 @@ LLM 실행 도메인 서비스
 
 import asyncio
 import json
+import os
 from typing import Optional, Dict, Any
 from uuid import UUID
 
@@ -101,13 +102,15 @@ class LLMExecutionService:
         # 파일이 있는 경우 파일 내용을 메시지에 추가
         if llm_request.file_paths:
             file_contents = []
-            for file_path in llm_request.file_paths:
+            for filename in llm_request.file_paths:
                 try:
+                    # uploads 디렉토리 경로 구성
+                    file_path = os.path.join("uploads", filename)
                     with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        file_contents.append(f"파일: {file_path}\n내용:\n{content}")
+                        file_contents.append(f"파일: {filename}\n내용:\n{content}")
                 except Exception as e:
-                    logger.warning(f"파일 읽기 실패: {file_path}, 오류: {str(e)}")
+                    logger.warning(f"파일 읽기 실패: {filename}, 오류: {str(e)}")
 
             if file_contents:
                 file_content = "\n\n".join(file_contents)

@@ -4,56 +4,36 @@ LLM 관리 Use Case
 
 from typing import List, Optional
 from uuid import UUID
+from pydantic import BaseModel
 
 from src.llm.application.service.llm_management_service import LLMManagementService
 from src.llm.domain.entity.llm_request import LLMRequest
 from src.shared.response.base_response import BaseResponse
 
 
-class CreateLLMRequestRequest:
+class CreateLLMRequestRequest(BaseModel):
     """LLM 요청 생성 요청 모델"""
 
-    def __init__(
-        self,
-        prompt: str,
-        model_name: str,
-        credential_name: str,
-        file_paths: Optional[List[str]] = None,
-    ):
-        self.prompt = prompt
-        self.model_name = model_name
-        self.credential_name = credential_name
-        self.file_paths = file_paths or []
+    prompt: str
+    model_name: str
+    credential_name: str
+    file_paths: Optional[List[str]] = None
 
 
-class LLMRequestResponse:
+class LLMRequestResponse(BaseModel):
     """LLM 요청 응답 모델"""
 
-    def __init__(
-        self,
-        id: str,
-        team_id: str,
-        user_id: str,
-        prompt: str,
-        model_name: str,
-        file_paths: List[str],
-        status: str,
-        result: Optional[str],
-        error_message: Optional[str],
-        created_at: str,
-        updated_at: str,
-    ):
-        self.id = id
-        self.team_id = team_id
-        self.user_id = user_id
-        self.prompt = prompt
-        self.model_name = model_name
-        self.file_paths = file_paths
-        self.status = status
-        self.result = result
-        self.error_message = error_message
-        self.created_at = created_at
-        self.updated_at = updated_at
+    id: str
+    team_id: str
+    user_id: str
+    prompt: str
+    model_name: str
+    file_paths: List[str]
+    status: str
+    result: Optional[str]
+    error_message: Optional[str]
+    created_at: str
+    updated_at: str
 
 
 class LLMManagementUseCase:
@@ -76,7 +56,7 @@ class LLMManagementUseCase:
                 prompt=request.prompt,
                 model_name=request.model_name,
                 credential_name=request.credential_name,
-                file_paths=request.file_paths,
+                file_paths=request.file_paths or [],
             )
 
             response = LLMRequestResponse(

@@ -37,7 +37,6 @@ class CreateLLMRequestModel(BaseModel):
 
 
 class FileUploadResponse(BaseModel):
-    file_path: str
     filename: str
 
 
@@ -92,13 +91,12 @@ async def upload_file(
             extra={
                 "user_id": current_user.user_id,
                 "team_id": current_user.team_id,
-                "filename": file.filename,
-                "file_path": file_path,
+                "uploaded_filename": file.filename,
             },
         )
 
         return BaseResponse.success_response(
-            data=FileUploadResponse(file_path=file_path, filename=file.filename),
+            data=FileUploadResponse(filename=file.filename),
             message="파일이 성공적으로 업로드되었습니다.",
         )
 
@@ -137,7 +135,8 @@ async def create_llm_request(
 
         if not response.success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=response.error_dict
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": response.message, "error": response.error},
             )
 
         logger.info(
@@ -146,7 +145,7 @@ async def create_llm_request(
                 "user_id": current_user.user_id,
                 "team_id": current_user.team_id,
                 "request_id": response.data.id,
-                "model_name": request.model_name,
+                "llm_model_name": request.model_name,
             },
         )
 
@@ -173,7 +172,8 @@ async def get_team_llm_requests(
 
         if not response.success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=response.error_dict
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": response.message, "error": response.error},
             )
 
         return response
@@ -200,7 +200,8 @@ async def get_llm_request(
 
         if not response.success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=response.error_dict
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": response.message, "error": response.error},
             )
 
         return response
@@ -227,7 +228,8 @@ async def delete_llm_request(
 
         if not response.success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=response.error_dict
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": response.message, "error": response.error},
             )
 
         logger.info(
@@ -235,7 +237,7 @@ async def delete_llm_request(
             extra={
                 "user_id": current_user.user_id,
                 "team_id": current_user.team_id,
-                "request_id": str(request_id),
+                "deleted_request_id": str(request_id),
             },
         )
 

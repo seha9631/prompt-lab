@@ -134,7 +134,7 @@ class LLMManagementService:
 
         try:
             llm_request = await llm_repo.find_by_id(request_id)
-            if llm_request and llm_request.team_id == team_id:
+            if llm_request and str(llm_request.team_id) == str(team_id):
                 return llm_request
             return None
         finally:
@@ -165,7 +165,7 @@ class LLMManagementService:
         try:
             # 요청이 해당 팀의 것인지 확인
             llm_request = await llm_repo.find_by_id(request_id)
-            if not llm_request or llm_request.team_id != team_id:
+            if not llm_request or str(llm_request.team_id) != str(team_id):
                 return False
 
             return await llm_repo.delete(request_id)
@@ -173,13 +173,11 @@ class LLMManagementService:
             await session.close()
 
     def save_uploaded_file(self, file_content: bytes, filename: str) -> str:
-        """업로드된 파일을 저장하고 파일 경로를 반환합니다."""
-        # 파일명에 타임스탬프 추가하여 중복 방지
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_filename = f"{timestamp}_{filename}"
-        file_path = os.path.join(self.upload_dir, safe_filename)
+        """업로드된 파일을 저장하고 파일명을 반환합니다."""
+        # 원본 파일명 그대로 사용
+        file_path = os.path.join(self.upload_dir, filename)
 
         with open(file_path, "wb") as f:
             f.write(file_content)
 
-        return file_path
+        return filename
