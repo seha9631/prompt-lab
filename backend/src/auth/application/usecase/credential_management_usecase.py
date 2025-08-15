@@ -14,6 +14,7 @@ from src.auth.domain.repository.source_repository import SourceRepository
 from src.shared.exception.business_exception import BusinessException
 from src.shared.exception.error_codes import ErrorCode
 from src.shared.security.encryption import EncryptionService
+from src.shared.security import APIKeyValidator
 
 
 class CredentialManagementUseCase:
@@ -71,6 +72,14 @@ class CredentialManagementUseCase:
                 raise BusinessException(
                     ErrorCode.CREDENTIAL_ALREADY_EXISTS,
                     "동일한 이름의 credential이 이미 존재합니다.",
+                )
+
+            # API 키 유효성 검증
+            is_valid = await APIKeyValidator.validate_api_key(source.name, api_key)
+            if not is_valid:
+                raise BusinessException(
+                    ErrorCode.API_KEY_VALIDATION_ERROR,
+                    "API 키가 유효하지 않습니다. 키를 확인하고 다시 시도해주세요.",
                 )
 
             # API 키 암호화
@@ -197,6 +206,26 @@ class CredentialManagementUseCase:
                 credential.update_source(source_id)
 
             if api_key is not None:
+                # API 키 유효성 검증
+                # source 정보가 필요한데, source_id가 변경되지 않았다면 기존 source_id 사용
+                current_source_id = (
+                    source_id if source_id is not None else credential.source_id
+                )
+                current_source = await source_repo.find_by_id(current_source_id)
+                if not current_source:
+                    raise BusinessException(
+                        ErrorCode.SOURCE_NOT_FOUND, "소스를 찾을 수 없습니다."
+                    )
+
+                is_valid = await APIKeyValidator.validate_api_key(
+                    current_source.name, api_key
+                )
+                if not is_valid:
+                    raise BusinessException(
+                        ErrorCode.API_KEY_VALIDATION_ERROR,
+                        "API 키가 유효하지 않습니다. 키를 확인하고 다시 시도해주세요.",
+                    )
+
                 # API 키 암호화
                 encrypted_api_key = EncryptionService.encrypt_api_key(
                     api_key, str(team_id)

@@ -70,6 +70,16 @@ class ErrorCode(Enum):
     EXTERNAL_SERVICE_TIMEOUT = ("E8002", "외부 서비스 요청이 시간 초과되었습니다.")
     EXTERNAL_SERVICE_UNAVAILABLE = ("E8003", "외부 서비스를 사용할 수 없습니다.")
 
+    # === API 키 검증 에러 (8500번대) ===
+    INVALID_API_KEY_FORMAT = ("E8501", "API 키 형식이 잘못되었습니다.")
+    API_KEY_VALIDATION_ERROR = ("E8502", "API 키 검증 중 오류가 발생했습니다.")
+    API_KEY_VALIDATION_TIMEOUT = ("E8503", "API 키 검증 중 타임아웃이 발생했습니다.")
+    API_KEY_VALIDATION_NETWORK_ERROR = (
+        "E8504",
+        "API 키 검증 중 네트워크 오류가 발생했습니다.",
+    )
+    UNSUPPORTED_API_SOURCE = ("E8505", "지원하지 않는 API 소스입니다.")
+
     def __init__(self, code: str, message: str):
         self.code = code
         self.message = message

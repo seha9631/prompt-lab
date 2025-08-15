@@ -5,6 +5,7 @@
 from .password_hasher import PasswordHasher
 from .email_validator import EmailValidator
 from .jwt_handler import JWTHandler, TokenData, JWTConfig
+from .api_key_validator import APIKeyValidator
 
 __all__ = [
     "PasswordHasher",
@@ -12,4 +13,5 @@ __all__ = [
     "JWTHandler",
     "TokenData",
     "JWTConfig",
+    "APIKeyValidator",
 ]
