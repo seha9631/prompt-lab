@@ -22,6 +22,17 @@ class CreateLLMRequestRequest(BaseModel):
     file_paths: Optional[List[str]] = None
 
 
+class CreateBatchLLMRequestRequest(BaseModel):
+    """배치 LLM 요청 생성 요청 모델"""
+
+    system_prompt: str
+    questions: List[str]
+    model_name: str
+    credential_name: str
+    project_id: str
+    file_paths: Optional[List[str]] = None
+
+
 class LLMRequestResponse(BaseModel):
     """LLM 요청 응답 모델"""
 
@@ -89,6 +100,55 @@ class LLMManagementUseCase:
         except Exception as e:
             return BaseResponse.error_response(
                 message="LLM 요청 생성 중 오류가 발생했습니다.",
+                error=str(e),
+            )
+
+    async def create_batch_llm_requests(
+        self,
+        team_id: UUID,
+        user_id: UUID,
+        request: CreateBatchLLMRequestRequest,
+    ) -> BaseResponse[List[LLMRequestResponse]]:
+        """여러 LLM 요청을 생성합니다."""
+        try:
+            llm_requests = await self.llm_management_service.create_batch_llm_requests(
+                team_id=team_id,
+                user_id=user_id,
+                project_id=UUID(request.project_id),
+                system_prompt=request.system_prompt,
+                questions=request.questions,
+                model_name=request.model_name,
+                credential_name=request.credential_name,
+                file_paths=request.file_paths or [],
+            )
+
+            responses = [
+                LLMRequestResponse(
+                    id=str(llm_request.id),
+                    team_id=str(llm_request.team_id),
+                    user_id=str(llm_request.user_id),
+                    project_id=str(llm_request.project_id),
+                    system_prompt=llm_request.system_prompt,
+                    question=llm_request.question,
+                    model_name=llm_request.model_name,
+                    file_paths=llm_request.file_paths,
+                    status=llm_request.status,
+                    result=llm_request.result,
+                    error_message=llm_request.error_message,
+                    created_at=llm_request.created_at.isoformat(),
+                    updated_at=llm_request.updated_at.isoformat(),
+                )
+                for llm_request in llm_requests
+            ]
+
+            return BaseResponse.success_response(
+                data=responses,
+                message=f"{len(responses)}개의 LLM 요청이 성공적으로 생성되었습니다.",
+            )
+
+        except Exception as e:
+            return BaseResponse.error_response(
+                message="배치 LLM 요청 생성 중 오류가 발생했습니다.",
                 error=str(e),
             )
 

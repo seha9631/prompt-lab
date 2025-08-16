@@ -98,6 +98,55 @@ class LLMManagementService:
         finally:
             await session.close()
 
+    async def create_batch_llm_requests(
+        self,
+        team_id: UUID,
+        user_id: UUID,
+        project_id: UUID,
+        system_prompt: str,
+        questions: List[str],
+        model_name: str,
+        credential_name: str,
+        file_paths: Optional[List[str]] = None,
+    ) -> List[LLMRequest]:
+        """여러 LLM 요청을 생성합니다."""
+        (llm_repo, credential_repo, source_repo), session = (
+            await self._get_repositories()
+        )
+
+        try:
+            created_requests = []
+
+            for question in questions:
+                # LLM 요청 생성
+                llm_request = LLMRequest(
+                    id=uuid.uuid4(),
+                    team_id=team_id,
+                    user_id=user_id,
+                    project_id=project_id,
+                    system_prompt=system_prompt,
+                    question=question,
+                    model_name=model_name,
+                    file_paths=file_paths or [],
+                    status="pending",
+                )
+
+                # DB에 저장
+                saved_request = await llm_repo.create(llm_request)
+                created_requests.append(saved_request)
+
+                # 비동기로 LLM 실행 (새로운 세션 사용)
+                asyncio.create_task(
+                    self._execute_llm_async_with_new_session(
+                        saved_request, credential_name
+                    )
+                )
+
+            return created_requests
+
+        finally:
+            await session.close()
+
     async def _execute_llm_async(
         self,
         llm_request: LLMRequest,
@@ -129,6 +178,49 @@ class LLMManagementService:
             await llm_repo.update(llm_request)
 
             logger.error(f"LLM 요청 실패: {llm_request.id}, 오류: {error_message}")
+
+    async def _execute_llm_async_with_new_session(
+        self,
+        llm_request: LLMRequest,
+        credential_name: str,
+    ):
+        """새로운 세션으로 LLM을 비동기 실행하고 결과를 업데이트합니다."""
+        (llm_repo, credential_repo, source_repo), session = (
+            await self._get_repositories()
+        )
+
+        try:
+            # 상태를 processing으로 변경
+            llm_request.update_status("processing")
+            await llm_repo.update(llm_request)
+
+            # LLM 실행 서비스 생성
+            llm_execution_service = LLMExecutionService(
+                credential_repository=credential_repo,
+                source_repository=source_repo,
+            )
+
+            # LLM 실행
+            result = await llm_execution_service.execute_llm_request(
+                llm_request, credential_name, self.upload_dir
+            )
+
+            # 성공 상태로 업데이트
+            llm_request.update_status("completed", result=result)
+            await llm_repo.update(llm_request)
+
+            logger.info(f"LLM 요청 완료: {llm_request.id}")
+
+        except Exception as e:
+            # 실패 상태로 업데이트
+            error_message = str(e)
+            llm_request.update_status("failed", error_message=error_message)
+            await llm_repo.update(llm_request)
+
+            logger.error(f"LLM 요청 실패: {llm_request.id}, 오류: {error_message}")
+
+        finally:
+            await session.close()
 
     async def get_llm_request(
         self, request_id: UUID, team_id: UUID

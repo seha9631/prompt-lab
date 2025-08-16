@@ -104,6 +104,10 @@ class LLMExecutionService:
             {"role": "user", "content": llm_request.question},
         ]
 
+        logger.info(
+            f"OpenAI 요청 메시지 구성: system_prompt='{llm_request.system_prompt}', question='{llm_request.question}'"
+        )
+
         # 파일이 있는 경우 파일 내용을 메시지에 추가
         if llm_request.file_paths:
             file_contents = []
@@ -142,6 +146,8 @@ class LLMExecutionService:
             "max_tokens": 4000,
             "temperature": 0.7,
         }
+
+        logger.info(f"OpenAI API 요청 데이터: {request_data}")
 
         headers = {
             "Authorization": f"Bearer {api_key}",

@@ -20,6 +20,7 @@ from src.shared.logging import get_logger
 
 from src.llm.application.usecase.llm_management_usecase import (
     CreateLLMRequestRequest,
+    CreateBatchLLMRequestRequest,
     LLMRequestResponse,
     LLMManagementUseCase,
 )
@@ -34,6 +35,19 @@ class CreateLLMRequestModel(BaseModel):
         ..., min_length=1, max_length=10000, description="시스템 프롬프트"
     )
     question: str = Field(..., min_length=1, max_length=10000, description="질문")
+    model_name: str = Field(..., description="모델명 (예: gpt-4, gpt-3.5-turbo)")
+    credential_name: str = Field(..., description="사용할 credential 이름")
+    project_id: str = Field(..., description="프로젝트 ID")
+    file_paths: List[str] = Field(default=[], description="업로드된 파일 경로들")
+
+
+class CreateBatchLLMRequestModel(BaseModel):
+    system_prompt: str = Field(
+        ..., min_length=1, max_length=10000, description="시스템 프롬프트"
+    )
+    questions: List[str] = Field(
+        ..., min_items=1, max_items=10, description="질문 목록 (최대 10개)"
+    )
     model_name: str = Field(..., description="모델명 (예: gpt-4, gpt-3.5-turbo)")
     credential_name: str = Field(..., description="사용할 credential 이름")
     project_id: str = Field(..., description="프로젝트 ID")
@@ -166,6 +180,57 @@ async def create_llm_request(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="LLM 요청 생성 중 오류가 발생했습니다.",
+        )
+
+
+@router.post("/batch-requests", response_model=BaseResponse[List[LLMRequestResponse]])
+async def create_batch_llm_requests(
+    request: CreateBatchLLMRequestModel,
+    current_user: TokenData = Depends(get_current_user),
+    usecase=Depends(get_llm_usecase),
+):
+    """여러 LLM 요청을 생성합니다."""
+    try:
+        batch_request = CreateBatchLLMRequestRequest(
+            system_prompt=request.system_prompt,
+            questions=request.questions,
+            model_name=request.model_name,
+            credential_name=request.credential_name,
+            project_id=request.project_id,
+            file_paths=request.file_paths,
+        )
+
+        response = await usecase.create_batch_llm_requests(
+            team_id=current_user.team_id,
+            user_id=current_user.user_id,
+            request=batch_request,
+        )
+
+        if not response.success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": response.message, "error": response.error},
+            )
+
+        logger.info(
+            "배치 LLM 요청 생성",
+            extra={
+                "user_id": current_user.user_id,
+                "team_id": current_user.team_id,
+                "question_count": len(request.questions),
+                "llm_model_name": request.model_name,
+            },
+        )
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"배치 LLM 요청 생성 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="배치 LLM 요청 생성 중 오류가 발생했습니다.",
         )
 
 
