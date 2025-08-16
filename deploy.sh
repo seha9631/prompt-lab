@@ -52,10 +52,13 @@ cleanup() {
     log_info "기존 컨테이너 정리 중..."
     
     # 기존 컨테이너 중지 및 삭제
-    docker-compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+    docker-compose -f docker-compose.prod.yml down --remove-orphans --volumes 2>/dev/null || true
     
     # 사용하지 않는 이미지 정리
     docker image prune -f
+    
+    # 사용하지 않는 볼륨 정리
+    docker volume prune -f
     
     log_success "정리 완료"
 }
