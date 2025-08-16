@@ -64,6 +64,23 @@ class LLMRequestRepositoryImpl(LLMRequestRepository):
 
         return [self._to_entity(model) for model in llm_request_models]
 
+    async def find_by_project_id_and_team_id(
+        self, project_id: UUID, team_id: UUID
+    ) -> List[LLMRequest]:
+        """프로젝트 ID와 팀 ID로 LLM 요청을 조회합니다."""
+        stmt = (
+            select(LLMRequestModel)
+            .where(
+                LLMRequestModel.project_id == project_id,
+                LLMRequestModel.team_id == team_id,
+            )
+            .order_by(LLMRequestModel.created_at.desc())
+        )
+        result = await self.session.execute(stmt)
+        llm_request_models = result.scalars().all()
+
+        return [self._to_entity(model) for model in llm_request_models]
+
     async def find_by_user_id(self, user_id: UUID) -> List[LLMRequest]:
         """사용자 ID로 모든 LLM 요청을 조회합니다."""
         stmt = (

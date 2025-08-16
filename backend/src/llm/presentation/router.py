@@ -261,6 +261,50 @@ async def get_team_llm_requests(
         )
 
 
+@router.get(
+    "/projects/{project_id}/requests",
+    response_model=BaseResponse[List[LLMRequestResponse]],
+)
+async def get_project_llm_requests(
+    project_id: str,
+    current_user: TokenData = Depends(get_current_user),
+    usecase=Depends(get_llm_usecase),
+):
+    """프로젝트의 모든 LLM 요청을 조회합니다."""
+    try:
+        response = await usecase.get_project_llm_requests(
+            project_id=UUID(project_id),
+            team_id=current_user.team_id,
+        )
+
+        if not response.success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": response.message, "error": response.error},
+            )
+
+        logger.info(
+            "프로젝트 LLM 요청 조회",
+            extra={
+                "user_id": current_user.user_id,
+                "team_id": current_user.team_id,
+                "project_id": project_id,
+                "request_count": len(response.data),
+            },
+        )
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"프로젝트 LLM 요청 조회 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="프로젝트 LLM 요청 조회 중 오류가 발생했습니다.",
+        )
+
+
 @router.get("/requests/{request_id}", response_model=BaseResponse[LLMRequestResponse])
 async def get_llm_request(
     request_id: UUID,

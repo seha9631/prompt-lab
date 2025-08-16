@@ -29,6 +29,13 @@ class LLMRequestRepository(ABC):
         pass
 
     @abstractmethod
+    async def find_by_project_id_and_team_id(
+        self, project_id: UUID, team_id: UUID
+    ) -> List[LLMRequest]:
+        """프로젝트 ID와 팀 ID로 LLM 요청을 조회합니다."""
+        pass
+
+    @abstractmethod
     async def find_by_user_id(self, user_id: UUID) -> List[LLMRequest]:
         """사용자 ID로 모든 LLM 요청을 조회합니다."""
         pass

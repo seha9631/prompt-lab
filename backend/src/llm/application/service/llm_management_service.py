@@ -245,6 +245,17 @@ class LLMManagementService:
         finally:
             await session.close()
 
+    async def get_project_llm_requests(
+        self, project_id: UUID, team_id: UUID
+    ) -> List[LLMRequest]:
+        """프로젝트의 모든 LLM 요청을 조회합니다."""
+        (llm_repo, _, _), session = await self._get_repositories()
+
+        try:
+            return await llm_repo.find_by_project_id_and_team_id(project_id, team_id)
+        finally:
+            await session.close()
+
     async def get_user_llm_requests(self, user_id: UUID) -> List[LLMRequest]:
         """사용자의 모든 LLM 요청을 조회합니다."""
         (llm_repo, _, _), session = await self._get_repositories()

@@ -233,6 +233,45 @@ class LLMManagementUseCase:
                 error=str(e),
             )
 
+    async def get_project_llm_requests(
+        self, project_id: UUID, team_id: UUID
+    ) -> BaseResponse[List[LLMRequestResponse]]:
+        """프로젝트의 모든 LLM 요청을 조회합니다."""
+        try:
+            llm_requests = await self.llm_management_service.get_project_llm_requests(
+                project_id, team_id
+            )
+
+            responses = [
+                LLMRequestResponse(
+                    id=str(req.id),
+                    team_id=str(req.team_id),
+                    user_id=str(req.user_id),
+                    project_id=str(req.project_id),
+                    system_prompt=req.system_prompt,
+                    question=req.question,
+                    model_name=req.model_name,
+                    file_paths=req.file_paths,
+                    status=req.status,
+                    result=req.result,
+                    error_message=req.error_message,
+                    created_at=req.created_at.isoformat(),
+                    updated_at=req.updated_at.isoformat(),
+                )
+                for req in llm_requests
+            ]
+
+            return BaseResponse.success_response(
+                data=responses,
+                message="프로젝트의 LLM 요청 목록을 성공적으로 조회했습니다.",
+            )
+
+        except Exception as e:
+            return BaseResponse.error_response(
+                message="프로젝트 LLM 요청 조회 중 오류가 발생했습니다.",
+                error=str(e),
+            )
+
     async def delete_llm_request(
         self, request_id: UUID, team_id: UUID
     ) -> BaseResponse[dict]:
