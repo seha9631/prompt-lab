@@ -280,17 +280,35 @@ class LLMManagementService:
             await session.close()
 
     def save_uploaded_file(
-        self, file_content: bytes, filename: str, team_id: str
+        self, file_content: bytes, filename: str, team_id: str, project_id: str
     ) -> str:
         """업로드된 파일을 저장하고 파일명을 반환합니다."""
-        # 팀별 폴더 생성
-        team_upload_dir = os.path.join(self.upload_dir, team_id)
-        os.makedirs(team_upload_dir, exist_ok=True)
+        # team_id/project_id 기준으로 폴더 생성
+        project_upload_dir = os.path.join(self.upload_dir, team_id, project_id)
+        os.makedirs(project_upload_dir, exist_ok=True)
 
         # 원본 파일명 그대로 사용
-        file_path = os.path.join(team_upload_dir, filename)
+        file_path = os.path.join(project_upload_dir, filename)
 
         with open(file_path, "wb") as f:
             f.write(file_content)
 
         return filename
+
+    def get_project_files(self, team_id: str, project_id: str) -> List[str]:
+        """프로젝트 폴더의 파일 목록을 조회합니다."""
+        project_upload_dir = os.path.join(self.upload_dir, team_id, project_id)
+
+        if not os.path.exists(project_upload_dir):
+            return []
+
+        try:
+            files = []
+            for filename in os.listdir(project_upload_dir):
+                file_path = os.path.join(project_upload_dir, filename)
+                if os.path.isfile(file_path):
+                    files.append(filename)
+            return sorted(files)
+        except Exception as e:
+            logger.error(f"프로젝트 파일 목록 조회 중 오류: {str(e)}")
+            return []

@@ -114,9 +114,13 @@ class LLMExecutionService:
             logger.info(f"파일 참조 시작: {llm_request.file_paths}")
             for filename in llm_request.file_paths:
                 try:
-                    # 팀별 uploads 디렉토리 경로 구성
-                    team_upload_dir = os.path.join(upload_dir, str(llm_request.team_id))
-                    file_path = os.path.join(team_upload_dir, filename)
+                    # team_id/project_id 기준으로 uploads 디렉토리 경로 구성
+                    project_upload_dir = os.path.join(
+                        upload_dir,
+                        str(llm_request.team_id),
+                        str(llm_request.project_id),
+                    )
+                    file_path = os.path.join(project_upload_dir, filename)
                     logger.info(f"파일 경로: {file_path}")
 
                     with open(file_path, "r", encoding="utf-8") as f:

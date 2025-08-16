@@ -58,6 +58,10 @@ class FileUploadResponse(BaseModel):
     filename: str
 
 
+class FileListResponse(BaseModel):
+    files: List[str]
+
+
 def get_llm_usecase():
     """LLMManagementUseCase 의존성 함수"""
     return app_container.get_llm_management_usecase()
@@ -66,6 +70,7 @@ def get_llm_usecase():
 @router.post("/upload", response_model=BaseResponse[FileUploadResponse])
 async def upload_file(
     file: UploadFile = File(...),
+    project_id: str = Form(...),
     current_user: TokenData = Depends(get_current_user),
 ):
     """파일을 업로드합니다."""
@@ -103,7 +108,7 @@ async def upload_file(
         # LLM 관리 서비스를 통해 파일 저장
         llm_service = app_container.get_llm_management_service()
         file_path = llm_service.save_uploaded_file(
-            file_content, file.filename, str(current_user.team_id)
+            file_content, file.filename, str(current_user.team_id), project_id
         )
 
         logger.info(
@@ -111,6 +116,7 @@ async def upload_file(
             extra={
                 "user_id": current_user.user_id,
                 "team_id": current_user.team_id,
+                "project_id": project_id,
                 "uploaded_filename": file.filename,
             },
         )
@@ -129,6 +135,42 @@ async def upload_file(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="파일 업로드 중 오류가 발생했습니다.",
+        )
+
+
+@router.get(
+    "/projects/{project_id}/files", response_model=BaseResponse[FileListResponse]
+)
+async def get_project_files(
+    project_id: str,
+    current_user: TokenData = Depends(get_current_user),
+):
+    """프로젝트의 업로드된 파일 목록을 조회합니다."""
+    try:
+        # LLM 관리 서비스를 통해 파일 목록 조회
+        llm_service = app_container.get_llm_management_service()
+        files = llm_service.get_project_files(str(current_user.team_id), project_id)
+
+        logger.info(
+            "프로젝트 파일 목록 조회",
+            extra={
+                "user_id": current_user.user_id,
+                "team_id": current_user.team_id,
+                "project_id": project_id,
+                "file_count": len(files),
+            },
+        )
+
+        return BaseResponse.success_response(
+            data=FileListResponse(files=files),
+            message="파일 목록을 성공적으로 조회했습니다.",
+        )
+
+    except Exception as e:
+        logger.error(f"프로젝트 파일 목록 조회 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="파일 목록 조회 중 오류가 발생했습니다.",
         )
 
 
