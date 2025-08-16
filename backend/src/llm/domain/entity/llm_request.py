@@ -15,7 +15,9 @@ class LLMRequest:
         id: UUID,
         team_id: UUID,
         user_id: UUID,
-        prompt: str,
+        project_id: UUID,
+        system_prompt: str,
+        question: str,
         model_name: str,
         file_paths: Optional[List[str]] = None,
         status: str = "pending",  # pending, processing, completed, failed
@@ -27,7 +29,9 @@ class LLMRequest:
         self.id = id
         self.team_id = team_id
         self.user_id = user_id
-        self.prompt = prompt
+        self.project_id = project_id
+        self.system_prompt = system_prompt
+        self.question = question
         self.model_name = model_name
         self.file_paths = file_paths or []
         self.status = status
@@ -51,4 +55,4 @@ class LLMRequest:
         self.updated_at = datetime.utcnow()
 
     def __repr__(self) -> str:
-        return f"LLMRequest(id={self.id}, team_id={self.team_id}, model='{self.model_name}', status='{self.status}')"
+        return f"LLMRequest(id={self.id}, team_id={self.team_id}, project_id={self.project_id}, model='{self.model_name}', status='{self.status}')"

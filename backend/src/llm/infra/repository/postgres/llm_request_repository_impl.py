@@ -26,7 +26,9 @@ class LLMRequestRepositoryImpl(LLMRequestRepository):
             id=llm_request.id,
             team_id=llm_request.team_id,
             user_id=llm_request.user_id,
-            prompt=llm_request.prompt,
+            project_id=llm_request.project_id,
+            system_prompt=llm_request.system_prompt,
+            question=llm_request.question,
             model_name=llm_request.model_name,
             file_paths=llm_request.file_paths,
             status=llm_request.status,
@@ -80,7 +82,8 @@ class LLMRequestRepositoryImpl(LLMRequestRepository):
             update(LLMRequestModel)
             .where(LLMRequestModel.id == llm_request.id)
             .values(
-                prompt=llm_request.prompt,
+                system_prompt=llm_request.system_prompt,
+                question=llm_request.question,
                 model_name=llm_request.model_name,
                 file_paths=llm_request.file_paths,
                 status=llm_request.status,
@@ -108,7 +111,9 @@ class LLMRequestRepositoryImpl(LLMRequestRepository):
             id=model.id,
             team_id=model.team_id,
             user_id=model.user_id,
-            prompt=model.prompt,
+            project_id=model.project_id,
+            system_prompt=model.system_prompt,
+            question=model.question,
             model_name=model.model_name,
             file_paths=model.file_paths,
             status=model.status,

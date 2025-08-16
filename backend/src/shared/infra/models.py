@@ -115,6 +115,26 @@ class CredentialModel(Base):
     source = relationship("SourceModel", back_populates="credentials")
 
 
+class ProjectModel(Base):
+    """Project SQLAlchemy 모델"""
+
+    __tablename__ = "project"
+
+    id = Column(SQLAlchemyUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    team_id = Column(
+        SQLAlchemyUUID(as_uuid=True), ForeignKey("team.id"), nullable=False
+    )
+    name = Column(String, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+
+    # 관계 설정
+    team = relationship("TeamModel")
+    llm_requests = relationship("LLMRequestModel", back_populates="project")
+
+
 class LLMRequestModel(Base):
     """LLM 요청 SQLAlchemy 모델"""
 
@@ -127,7 +147,11 @@ class LLMRequestModel(Base):
     user_id = Column(
         SQLAlchemyUUID(as_uuid=True), ForeignKey("user.id"), nullable=False
     )
-    prompt = Column(String, nullable=False)
+    project_id = Column(
+        SQLAlchemyUUID(as_uuid=True), ForeignKey("project.id"), nullable=False
+    )
+    system_prompt = Column(Text, nullable=False)
+    question = Column(Text, nullable=False)
     model_name = Column(String, nullable=False)
     file_paths = Column(ARRAY(String), nullable=False, default=[])
     status = Column(
@@ -143,3 +167,4 @@ class LLMRequestModel(Base):
     # 관계 설정
     team = relationship("TeamModel")
     user = relationship("UserModel")
+    project = relationship("ProjectModel", back_populates="llm_requests")

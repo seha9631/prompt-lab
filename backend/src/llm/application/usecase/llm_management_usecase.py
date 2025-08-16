@@ -14,9 +14,11 @@ from src.shared.response.base_response import BaseResponse
 class CreateLLMRequestRequest(BaseModel):
     """LLM 요청 생성 요청 모델"""
 
-    prompt: str
+    system_prompt: str
+    question: str
     model_name: str
     credential_name: str
+    project_id: str
     file_paths: Optional[List[str]] = None
 
 
@@ -26,7 +28,9 @@ class LLMRequestResponse(BaseModel):
     id: str
     team_id: str
     user_id: str
-    prompt: str
+    project_id: str
+    system_prompt: str
+    question: str
     model_name: str
     file_paths: List[str]
     status: str
@@ -53,7 +57,9 @@ class LLMManagementUseCase:
             llm_request = await self.llm_management_service.create_llm_request(
                 team_id=team_id,
                 user_id=user_id,
-                prompt=request.prompt,
+                project_id=UUID(request.project_id),
+                system_prompt=request.system_prompt,
+                question=request.question,
                 model_name=request.model_name,
                 credential_name=request.credential_name,
                 file_paths=request.file_paths or [],
@@ -63,7 +69,9 @@ class LLMManagementUseCase:
                 id=str(llm_request.id),
                 team_id=str(llm_request.team_id),
                 user_id=str(llm_request.user_id),
-                prompt=llm_request.prompt,
+                project_id=str(llm_request.project_id),
+                system_prompt=llm_request.system_prompt,
+                question=llm_request.question,
                 model_name=llm_request.model_name,
                 file_paths=llm_request.file_paths,
                 status=llm_request.status,
@@ -103,7 +111,9 @@ class LLMManagementUseCase:
                 id=str(llm_request.id),
                 team_id=str(llm_request.team_id),
                 user_id=str(llm_request.user_id),
-                prompt=llm_request.prompt,
+                project_id=str(llm_request.project_id),
+                system_prompt=llm_request.system_prompt,
+                question=llm_request.question,
                 model_name=llm_request.model_name,
                 file_paths=llm_request.file_paths,
                 status=llm_request.status,
@@ -138,7 +148,9 @@ class LLMManagementUseCase:
                     id=str(req.id),
                     team_id=str(req.team_id),
                     user_id=str(req.user_id),
-                    prompt=req.prompt,
+                    project_id=str(req.project_id),
+                    system_prompt=req.system_prompt,
+                    question=req.question,
                     model_name=req.model_name,
                     file_paths=req.file_paths,
                     status=req.status,

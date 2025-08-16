@@ -31,6 +31,15 @@ from src.auth.infra.repository.postgres.source_model_repository_impl import (
 from src.llm.infra.repository.postgres.llm_request_repository_impl import (
     LLMRequestRepositoryImpl,
 )
+from src.llm.application.service.project_management_service import (
+    ProjectManagementService,
+)
+from src.llm.application.usecase.project_management_usecase import (
+    ProjectManagementUseCase,
+)
+from src.llm.infra.repository.postgres.project_repository_impl import (
+    ProjectRepositoryImpl,
+)
 
 
 class AppContainer:
@@ -61,6 +70,7 @@ class AppContainer:
         self._services["credential_repository_class"] = CredentialRepositoryImpl
         self._services["source_repository_class"] = SourceRepositoryImpl
         self._services["source_model_repository_class"] = SourceModelRepositoryImpl
+        self._services["project_repository_class"] = ProjectRepositoryImpl
 
         # 4. Domain Service 계층 (기본 인스턴스 - 필요시 재생성)
         # 실제로는 각 요청마다 새 세션으로 새 Repository를 만들어 사용
@@ -141,6 +151,18 @@ class AppContainer:
         )
         self._services["llm_management_usecase"] = llm_management_usecase
 
+        # 12. Project 관리 서비스 및 UseCase
+        project_management_service = ProjectManagementService(
+            project_repository_class=ProjectRepositoryImpl,
+            get_session_func=self._services["get_session"],
+        )
+        self._services["project_management_service"] = project_management_service
+
+        project_management_usecase = ProjectManagementUseCase(
+            project_management_service=project_management_service
+        )
+        self._services["project_management_usecase"] = project_management_usecase
+
         self._initialized = True
 
     async def shutdown(self):
@@ -187,6 +209,9 @@ class AppContainer:
 
     def get_llm_management_usecase(self) -> LLMManagementUseCase:
         return self.get("llm_management_usecase")
+
+    def get_project_management_usecase(self) -> ProjectManagementUseCase:
+        return self.get("project_management_usecase")
 
     def get_session_factory(self):
         """SQLAlchemy 세션 팩토리 반환"""

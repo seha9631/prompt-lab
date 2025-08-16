@@ -109,10 +109,12 @@ def create_app() -> FastAPI:
     from src.auth.presentation.credential_router import router as credential_router
     from src.auth.presentation.source_router import router as source_router
     from src.llm.presentation.router import router as llm_router
+    from src.llm.presentation.project_router import router as project_router
 
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(credential_router, prefix="/api/v1")
     app.include_router(source_router, prefix="/api/v1")
     app.include_router(llm_router, prefix="/api/v1")
+    app.include_router(project_router, prefix="/api/v1")
 
     return app

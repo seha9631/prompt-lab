@@ -99,7 +99,10 @@ class LLMExecutionService:
         import httpx
 
         # OpenAI API 요청 데이터 구성
-        messages = [{"role": "user", "content": llm_request.prompt}]
+        messages = [
+            {"role": "system", "content": llm_request.system_prompt},
+            {"role": "user", "content": llm_request.question},
+        ]
 
         # 파일이 있는 경우 파일 내용을 메시지에 추가
         if llm_request.file_paths:

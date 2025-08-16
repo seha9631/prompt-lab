@@ -30,9 +30,13 @@ logger = get_logger(__name__)
 
 # Request/Response Models
 class CreateLLMRequestModel(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=10000, description="프롬프트")
+    system_prompt: str = Field(
+        ..., min_length=1, max_length=10000, description="시스템 프롬프트"
+    )
+    question: str = Field(..., min_length=1, max_length=10000, description="질문")
     model_name: str = Field(..., description="모델명 (예: gpt-4, gpt-3.5-turbo)")
     credential_name: str = Field(..., description="사용할 credential 이름")
+    project_id: str = Field(..., description="프로젝트 ID")
     file_paths: List[str] = Field(default=[], description="업로드된 파일 경로들")
 
 
@@ -123,9 +127,11 @@ async def create_llm_request(
     """LLM 요청을 생성합니다."""
     try:
         llm_request = CreateLLMRequestRequest(
-            prompt=request.prompt,
+            system_prompt=request.system_prompt,
+            question=request.question,
             model_name=request.model_name,
             credential_name=request.credential_name,
+            project_id=request.project_id,
             file_paths=request.file_paths,
         )
 
