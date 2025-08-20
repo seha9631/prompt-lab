@@ -1,0 +1,45 @@
+:root {
+    --radius: 10px;
+    --transition: 160ms ease;
+}
+
+:root[data-theme="light"] {
+    --bg: #ffffff;
+    --fg: #111111;
+
+    --nav-bg: #ffffff;
+    --nav-fg: #111111;
+    --nav-border: #111111;
+
+    --card: #f6f7f9;
+    --border: #e5e7eb;
+
+    --accent: #8938D9;
+}
+
+:root[data-theme="dark"] {
+    --bg: #1a1a1a;
+    --fg: #ffffff;
+
+    --nav-bg: #1a1a1a;
+    --nav-fg: #ffffff;
+    --nav-border: #ffffff;
+
+    --card: #242424;
+    --border: #ffffff;
+
+    --accent: #7c3aed;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    transition: background-color var(--transition), color var(--transition);
+}
