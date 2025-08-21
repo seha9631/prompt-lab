@@ -1,6 +1,6 @@
 import AppRouter from './AppRouter';
-import Navbar from '../widgets/navbar/Navbar';
-import LoginDialog from '../features/auth/ui/LoginDialog';
+import Navbar from '../widgets/navbar';
+import LoginDialog from '../features/auth/LoginDialog';
 import CssBaseline from '@mui/material/CssBaseline';
 import { lightTheme, darkTheme } from '../ThemeManager'
 import { ThemeProvider } from '@mui/material/styles';
@@ -21,10 +21,10 @@ function App() {
   return (
     <>
       <I18nProvider>
-        <ThemeProvider theme={lightTheme}>
+        <ThemeProvider theme={darkTheme}>
           <CssBaseline />
           <Navbar
-            isLoggedIn={true}
+            isLoggedIn={false}
             userName="Guest"
             onLoginClick={handleLoginClick}
             onLogoutClick={handleLogoutClick}
