@@ -1,5 +1,6 @@
 # PostgreSQL data directory
 postgres_data/
+postgres_data_prod/
 
 # Environment variables
 .env
@@ -90,3 +91,6 @@ dmypy.json
 
 .vscode/
 .cursor/
+
+
+uploads/

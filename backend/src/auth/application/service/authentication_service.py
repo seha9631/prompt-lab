@@ -1,10 +1,15 @@
+"""
+Authentication Application Service
+인증 애플리케이션 서비스
+"""
+
 from uuid import UUID
 from typing import Optional, Dict, Any
 
-from ...domain.repository.user_repository import UserRepository
-from ...domain.value_object.app_credentials import AppPassword
-from ....shared.security.jwt_handler import JWTHandler, TokenData
-from ....shared.exception import (
+from src.auth.domain.repository.user_repository import UserRepository
+from src.auth.domain.value_object.app_credentials import AppPassword
+from src.shared.security.jwt_handler import JWTHandler, TokenData
+from src.shared.exception import (
     AuthenticationException,
     InvalidTokenException,
     TokenRefreshFailedException,

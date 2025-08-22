@@ -2,7 +2,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from src.shared.response import BaseResponse
-from ..service.user_management_service import UserManagementService
+from src.auth.application.service.user_management_service import UserManagementService
 
 
 class ChangeUserRoleRequest(BaseModel):

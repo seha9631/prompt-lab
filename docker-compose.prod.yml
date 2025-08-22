@@ -7,18 +7,20 @@ services:
     container_name: prompt_lab_postgres_prod
     environment:
       POSTGRES_DB: prompt_lab
-      POSTGRES_USER: prompt_lab_user
-      POSTGRES_PASSWORD: prompt_lab_password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./seed_data.sql:/docker-entrypoint-initdb.d/02-seed_data.sql:ro
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - prompt_lab_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prompt_lab_user -d prompt_lab"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prompt_lab"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -30,7 +32,7 @@ services:
       dockerfile: Dockerfile
     container_name: prompt_lab_api_prod
     environment:
-      - DATABASE_URL=postgresql://prompt_lab_user:prompt_lab_password@postgres:5432/prompt_lab
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/prompt_lab
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-here-change-in-production}
       - JWT_ALGORITHM=HS256
       - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=360

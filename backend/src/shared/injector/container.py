@@ -1,16 +1,45 @@
 from databases import Database
 from typing import Dict, Any
 
-from ...shared.infra.database import db_connection
-from ...auth.domain.service.user_creation_service import UserCreationService
-from ...auth.application.service.user_management_service import UserManagementService
-from ...auth.application.usecase.create_user_usecase import CreateUserUseCase
-from ...auth.application.usecase.approve_user_usecase import ApproveUserUseCase
-from ...auth.application.usecase.authentication_usecase import AuthenticationUseCase
-from ...auth.application.usecase.team_management_usecase import TeamManagementUseCase
-from ...auth.application.service.authentication_service import AuthenticationService
-from ...auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
-from ...auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
+from src.shared.infra.database import db_connection
+from src.auth.domain.service.user_creation_service import UserCreationService
+from src.auth.application.service.user_management_service import UserManagementService
+from src.auth.application.usecase.create_user_usecase import CreateUserUseCase
+from src.auth.application.usecase.approve_user_usecase import ApproveUserUseCase
+from src.auth.application.usecase.authentication_usecase import AuthenticationUseCase
+from src.auth.application.usecase.team_management_usecase import TeamManagementUseCase
+from src.auth.application.usecase.credential_management_usecase import (
+    CredentialManagementUseCase,
+)
+from src.auth.application.usecase.source_management_usecase import (
+    SourceManagementUseCase,
+)
+from src.llm.application.service.llm_management_service import LLMManagementService
+from src.llm.application.usecase.llm_management_usecase import LLMManagementUseCase
+from src.auth.application.service.authentication_service import AuthenticationService
+from src.auth.infra.repository.postgres.user_repository_impl import UserRepositoryImpl
+from src.auth.infra.repository.postgres.team_repository_impl import TeamRepositoryImpl
+from src.auth.infra.repository.postgres.credential_repository_impl import (
+    CredentialRepositoryImpl,
+)
+from src.auth.infra.repository.postgres.source_repository_impl import (
+    SourceRepositoryImpl,
+)
+from src.auth.infra.repository.postgres.source_model_repository_impl import (
+    SourceModelRepositoryImpl,
+)
+from src.llm.infra.repository.postgres.llm_request_repository_impl import (
+    LLMRequestRepositoryImpl,
+)
+from src.llm.application.service.project_management_service import (
+    ProjectManagementService,
+)
+from src.llm.application.usecase.project_management_usecase import (
+    ProjectManagementUseCase,
+)
+from src.llm.infra.repository.postgres.project_repository_impl import (
+    ProjectRepositoryImpl,
+)
 
 
 class AppContainer:
@@ -38,6 +67,10 @@ class AppContainer:
         # 3. Repository 클래스들 (PostgreSQL 구현체)
         self._services["user_repository_class"] = UserRepositoryImpl
         self._services["team_repository_class"] = TeamRepositoryImpl
+        self._services["credential_repository_class"] = CredentialRepositoryImpl
+        self._services["source_repository_class"] = SourceRepositoryImpl
+        self._services["source_model_repository_class"] = SourceModelRepositoryImpl
+        self._services["project_repository_class"] = ProjectRepositoryImpl
 
         # 4. Domain Service 계층 (기본 인스턴스 - 필요시 재생성)
         # 실제로는 각 요청마다 새 세션으로 새 Repository를 만들어 사용
@@ -86,6 +119,50 @@ class AppContainer:
         )
         self._services["team_management_usecase"] = team_management_usecase
 
+        # 9. Credential 관리 UseCase
+        credential_management_usecase = CredentialManagementUseCase(
+            credential_repository_class=CredentialRepositoryImpl,
+            team_repository_class=TeamRepositoryImpl,
+            source_repository_class=SourceRepositoryImpl,
+            get_session_func=self._services["get_session"],
+        )
+        self._services["credential_management_usecase"] = credential_management_usecase
+
+        # 10. Source 관리 UseCase
+        source_management_usecase = SourceManagementUseCase(
+            source_repository_class=SourceRepositoryImpl,
+            source_model_repository_class=SourceModelRepositoryImpl,
+            get_session_func=self._services["get_session"],
+        )
+        self._services["source_management_usecase"] = source_management_usecase
+
+        # 11. LLM 관리 서비스 및 UseCase
+        llm_management_service = LLMManagementService(
+            llm_request_repository_class=LLMRequestRepositoryImpl,
+            credential_repository_class=CredentialRepositoryImpl,
+            source_repository_class=SourceRepositoryImpl,
+            get_session_func=self._services["get_session"],
+            upload_dir="uploads",
+        )
+        self._services["llm_management_service"] = llm_management_service
+
+        llm_management_usecase = LLMManagementUseCase(
+            llm_management_service=llm_management_service
+        )
+        self._services["llm_management_usecase"] = llm_management_usecase
+
+        # 12. Project 관리 서비스 및 UseCase
+        project_management_service = ProjectManagementService(
+            project_repository_class=ProjectRepositoryImpl,
+            get_session_func=self._services["get_session"],
+        )
+        self._services["project_management_service"] = project_management_service
+
+        project_management_usecase = ProjectManagementUseCase(
+            project_management_service=project_management_service
+        )
+        self._services["project_management_usecase"] = project_management_usecase
+
         self._initialized = True
 
     async def shutdown(self):
@@ -120,6 +197,21 @@ class AppContainer:
 
     def get_team_management_usecase(self) -> TeamManagementUseCase:
         return self.get("team_management_usecase")
+
+    def get_credential_management_usecase(self) -> CredentialManagementUseCase:
+        return self.get("credential_management_usecase")
+
+    def get_source_management_usecase(self) -> SourceManagementUseCase:
+        return self.get("source_management_usecase")
+
+    def get_llm_management_service(self) -> LLMManagementService:
+        return self.get("llm_management_service")
+
+    def get_llm_management_usecase(self) -> LLMManagementUseCase:
+        return self.get("llm_management_usecase")
+
+    def get_project_management_usecase(self) -> ProjectManagementUseCase:
+        return self.get("project_management_usecase")
 
     def get_session_factory(self):
         """SQLAlchemy 세션 팩토리 반환"""

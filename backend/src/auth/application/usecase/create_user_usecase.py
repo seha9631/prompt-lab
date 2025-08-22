@@ -1,9 +1,14 @@
+"""
+Create User Use Case
+사용자 생성 비즈니스 로직
+"""
+
 from uuid import UUID
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
 
 from src.shared.response import BaseResponse
-from ..service.user_management_service import UserManagementService
+from src.auth.application.service.user_management_service import UserManagementService
 
 
 class CreateUserWithTeamRequest(BaseModel):

@@ -1,7 +1,12 @@
+"""
+User Repository Interface
+사용자 데이터 접근 인터페이스
+"""
+
 from abc import ABC, abstractmethod
 from uuid import UUID
 from typing import Optional, List
-from ..entity.user import User
+from src.auth.domain.entity.user import User
 
 
 class UserRepository(ABC):
