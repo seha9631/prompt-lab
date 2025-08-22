@@ -1,40 +1,53 @@
+import { useState } from 'react';
 import AppRouter from './AppRouter';
-import Navbar from '../widgets/navbar/Navbar';
+import Navbar from '../widgets/navbar';
 import LoginDialog from '../features/auth/ui/LoginDialog';
 import CssBaseline from '@mui/material/CssBaseline';
-import { lightTheme, darkTheme } from '../ThemeManager'
 import { ThemeProvider } from '@mui/material/styles';
-import I18nProvider from './providers/I18nProviders';
-import { useState } from 'react';
+import { lightTheme, darkTheme } from '../ThemeManager';
+import I18nProvider from './providers/I18nProvider';
+import AuthProvider, { useAuthContext } from './providers/AuthProvider';
 
-function App() {
+function Shell() {
   const [loginOpen, setLoginOpen] = useState(false);
+  const { user, accessToken, signIn, signOut } = useAuthContext();
 
-  const handleLoginClick = () => {
-    setLoginOpen(true);
-  };
-
-  const handleLogoutClick = () => {
-    console.log('logout');
+  const handleLoginClick = () => setLoginOpen(true);
+  const handleLogoutClick = () => signOut();
+  const handleSubmit = async (values) => {
+    await signIn(values);
+    setLoginOpen(false);
   };
 
   return (
     <>
-      <I18nProvider>
-        <ThemeProvider theme={lightTheme}>
-          <CssBaseline />
-          <Navbar
-            isLoggedIn={true}
-            userName="Guest"
-            onLoginClick={handleLoginClick}
-            onLogoutClick={handleLogoutClick}
-          />
-          <LoginDialog open={loginOpen} onClose={() => setLoginOpen(false)} />
-          <AppRouter />
-        </ThemeProvider>
-      </I18nProvider>
+      <CssBaseline />
+      <Navbar
+        isLoggedIn={!!accessToken}
+        userName={user?.name || 'User'}
+        onLoginClick={handleLoginClick}
+        onLogoutClick={handleLogoutClick}
+      />
+      <LoginDialog
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        onSubmit={handleSubmit}
+      />
+      <AppRouter />
     </>
-  )
+  );
 }
 
-export default App
+function App() {
+  return (
+    <I18nProvider>
+      <ThemeProvider theme={darkTheme}>
+        <AuthProvider>
+          <Shell />
+        </AuthProvider>
+      </ThemeProvider>
+    </I18nProvider>
+  );
+}
+
+export default App;
