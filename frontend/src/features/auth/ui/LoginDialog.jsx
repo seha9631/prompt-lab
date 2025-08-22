@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
     Dialog, DialogContent, Stack, Typography, TextField, Button,
-    FormControlLabel, Checkbox, Link, Box
+    FormControlLabel, Checkbox, Link, Box, Alert
 } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useTranslation } from 'react-i18next';
@@ -16,11 +16,32 @@ function LoginDialog({
     const [values, setValues] = useState({ id: '', password: '', keep: false });
     const [touched, setTouched] = useState({ id: false, password: false });
     const [submitting, setSubmitting] = useState(false);
+    const [formError, setFormError] = useState('');
 
     const errors = useMemo(() => {
         const e = {};
-        if (touched.id && values.id.trim().length < 3) e.id = t('errId');
-        if (touched.password && values.password.length < 8) e.password = t('errPw');
+
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
+        if (touched.id && !emailRegex.test(values.id.trim())) {
+            e.id = t('errId');
+        }
+
+        const pw = values.password || '';
+        const pwRules = [
+            { ok: pw.length >= 8, msg: t('errPW.minLength') },
+            { ok: /[A-Z]/.test(pw), msg: t('errPW.upper') },
+            { ok: /[a-z]/.test(pw), msg: t('errPW.lower') },
+            { ok: /\d/.test(pw), msg: t('errPW.number') },
+            { ok: /[\W_]/.test(pw), msg: t('errPW.special') },
+        ];
+
+        if (touched.password) {
+            const firstFail = pwRules.find(r => !r.ok);
+            if (firstFail) {
+                e.password = firstFail.msg;
+            }
+        }
+
         return e;
     }, [touched, values, t]);
 
@@ -29,6 +50,7 @@ function LoginDialog({
     const handleChange = (field) => (e) => {
         const v = field === 'keep' ? e.target.checked : e.target.value;
         setValues((s) => ({ ...s, [field]: v }));
+        if (formError) setFormError('');
     };
 
     const handleBlur = (field) => () => setTouched((s) => ({ ...s, [field]: true }));
@@ -40,8 +62,19 @@ function LoginDialog({
 
         try {
             setSubmitting(true);
+            setFormError('');
             await onSubmit?.(values);
             onClose?.();
+        } catch (err) {
+            const code = err?.response?.data?.error_code;
+            if (code === 'E2001') {
+                setFormError(t('errInvalidCredentials'));
+            } else {
+                const fallback =
+                    err?.response?.data?.message ||
+                    t('errGeneric');
+                setFormError(fallback);
+            }
         } finally {
             setSubmitting(false);
         }
@@ -53,6 +86,12 @@ function LoginDialog({
                 <Typography variant="h3" textAlign="center" sx={{ mb: 3 }}>
                     {t('brand')}
                 </Typography>
+
+                {formError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {formError}
+                    </Alert>
+                )}
 
                 <Box component="form" onSubmit={handleSubmit} noValidate>
                     <Stack spacing={2.5}>
