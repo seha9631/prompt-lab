@@ -9,7 +9,10 @@ import { useTranslation } from 'react-i18next';
 function LoginDialog({
     open,
     onClose,
-    onSubmit
+    onSubmit,
+    onOpenSignup,
+    onOpenFindId,
+    onOpenFindPw
 }) {
     const { t } = useTranslation('auth');
 
@@ -140,15 +143,15 @@ function LoginDialog({
                         </Button>
 
                         <Typography variant="body2" textAlign="center" sx={{ color: 'text.secondary', mt: 1 }}>
-                            <Link href="/signup" underline="hover" sx={{ mx: 0.5 }}>
+                            <Link component="button" type="button" onClick={onOpenSignup} underline="hover" sx={{ mx: 0.5 }}>
                                 {t('signup')}
                             </Link>
                             /
-                            <Link href="/find-id" underline="hover" sx={{ mx: 0.5 }}>
+                            <Link component="button" type="button" onClick={onOpenFindId} underline="hover" sx={{ mx: 0.5 }}>
                                 {t('findId')}
                             </Link>
                             /
-                            <Link href="/find-password" underline="hover" sx={{ mx: 0.5 }}>
+                            <Link component="button" type="button" onClick={onOpenFindPw} underline="hover" sx={{ mx: 0.5 }}>
                                 {t('findPw')}
                             </Link>
                         </Typography>

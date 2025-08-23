@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 import AppRouter from './AppRouter';
 import Navbar from '../widgets/navbar';
@@ -16,24 +15,17 @@ import { api } from '../shared/api/base';
 
 function Shell() {
   const { user, accessToken, signIn, signOut } = useAuthContext();
+  const [dialogType, setDialogType] = useState(null);
 
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [signupOpen, setSignupOpen] = useState(false);
+  const openLogin = () => setDialogType('login');
+  const openSignup = () => setDialogType('signup');
+  const closeDialog = () => setDialogType(null);
 
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (location.pathname === '/signup') {
-      setSignupOpen(true);
-    }
-  }, [location.pathname]);
-
-  const handleLoginClick = () => setLoginOpen(true);
   const handleLogoutClick = () => signOut();
+
   const handleLoginSubmit = async (values) => {
     await signIn(values);
-    setLoginOpen(false);
+    closeDialog();
   };
 
   const createAndLogin = async ({ email, password, name, teamName, keep }) => {
@@ -45,9 +37,7 @@ function Shell() {
     });
 
     await signIn({ id: email, password, keep });
-
-    setSignupOpen(false);
-    if (location.pathname === '/signup') navigate('/', { replace: true });
+    closeDialog();
   };
 
   return (
@@ -56,22 +46,22 @@ function Shell() {
       <Navbar
         isLoggedIn={!!accessToken}
         userName={user?.name || 'User'}
-        onLoginClick={handleLoginClick}
+        onLoginClick={openLogin}
         onLogoutClick={handleLogoutClick}
       />
 
       <LoginDialog
-        open={loginOpen}
-        onClose={() => setLoginOpen(false)}
+        open={dialogType === 'login'}
+        onClose={closeDialog}
         onSubmit={handleLoginSubmit}
+        onOpenSignup={openSignup}
+      // onOpenFindId={() => setDialogType('findId')}
+      // onOpenFindPw={() => setDialogType('findPw')}
       />
 
       <SignupDialog
-        open={signupOpen}
-        onClose={() => {
-          setSignupOpen(false);
-          if (location.pathname === '/signup') navigate('/', { replace: true });
-        }}
+        open={dialogType === 'signup'}
+        onClose={closeDialog}
         onSubmit={createAndLogin}
       />
 
