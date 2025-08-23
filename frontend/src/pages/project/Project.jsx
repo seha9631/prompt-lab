@@ -1,6 +1,8 @@
 import ProjectHeader from './ProjectHeader';
+import { useState } from 'react';
+import StageStepper from './StageStepper';
 
-function ProjectPage() {
+function Project() {
     const project = {
         id: 'proj_1',
         name: 'Project name',
@@ -13,11 +15,17 @@ function ProjectPage() {
         ],
     };
 
+    const [stage, setStage] = useState(0);
+
     return (
         <div>
             <ProjectHeader project={project} />
+            <StageStepper value={stage} onChange={setStage} />
+            {stage === 0 && <div>Test Cases Panel</div>}
+            {stage === 1 && <div>Experiments Panel</div>}
+            {stage === 2 && <div>Results Panel</div>}
         </div>
     );
 }
 
-export default ProjectPage;
+export default Project;
