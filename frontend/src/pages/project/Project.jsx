@@ -2,6 +2,7 @@ import ProjectHeader from './ProjectHeader';
 import { useState } from 'react';
 import StageStepper from './StageStepper';
 import TestCasesPanel from './TestCasesPanel';
+import ExperimentsPanel from './ExperimentsPanel';
 
 function Project() {
     const project = {
@@ -27,12 +28,7 @@ function Project() {
             <ProjectHeader project={project} />
             <StageStepper value={stage} onChange={setStage} />
             {stage === 0 && <TestCasesPanel cases={cases} setCases={setCases} />}
-            {stage === 1 && (
-                <div>
-                    <h3>Experiments Panel</h3>
-                    <pre>{JSON.stringify(cases, null, 2)}</pre>
-                </div>
-            )}
+            {stage === 1 && <ExperimentsPanel cases={cases} />}
             {stage === 2 && <div>Results Panel</div>}
         </div>
     );
