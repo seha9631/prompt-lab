@@ -1,27 +1,40 @@
+import { useState, useEffect } from 'react';
+import { getProjects } from '../../features/project/api/project';
+import { useAuthContext } from '../../app/providers/AuthProvider';
+
 import ProjectHeader from './ProjectHeader';
-import { useState } from 'react';
 import StageStepper from './StageStepper';
 import TestCasesPanel from './TestCasesPanel';
 import ExperimentsPanel from './ExperimentsPanel';
 
 function Project() {
-    const project = {
-        id: 'proj_1',
-        name: 'Project name',
-        description: 'description...',
-        teamCode: 'ABCD-1234',
-        leader: { id: 'u1', name: 'Leader name' },
-        members: [
-            { id: 'u2', name: 'Member 1' },
-            { id: 'u3', name: 'Member 2' },
-        ],
-    };
-
+    const { accessToken } = useAuthContext();
+    const [project, setProject] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [cases, setCases] = useState([
-        { id: 'c1', request: 'Case 1 input', expected: 'Expected result 1' },
+        { id: '', request: '', expected: '' },
     ]);
-
     const [stage, setStage] = useState(0);
+
+    useEffect(() => {
+        if (!accessToken) return;
+        (async () => {
+            try {
+                const list = await getProjects();
+                setProject(list[0] ?? null);
+            } catch (e) {
+                setError(e?.response?.data ?? e);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, [accessToken]);
+
+    if (!accessToken) return <div>Signing in...</div>;
+    if (loading) return <div>Loading projects...</div>;
+    if (error) return <div style={{ color: 'red' }}>Error: {JSON.stringify(error)}</div>;
+    if (!project) return <div>No projects found.</div>;
 
     return (
         <div>
