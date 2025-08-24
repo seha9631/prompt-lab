@@ -2,14 +2,21 @@ import { useState, useMemo } from 'react';
 import { Box, Stack, Typography, Chip, Snackbar, Alert } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-function ProjectHeader({ project }) {
+function ProjectHeader({ project, members }) {
     const [toast, setToast] = useState(false);
-    const members = useMemo(() => project.members?.map(m => m.name).join(', '), [project.members]);
 
     const copyTeamCode = async () => {
-        await navigator.clipboard.writeText(project.teamCode);
+        await navigator.clipboard.writeText(project.team_id);
         setToast(true);
     };
+
+    const { leader, otherMembers } = useMemo(() => {
+        if (!Array.isArray(members)) return { leader: null, otherMembers: [] };
+
+        const leader = members.find(m => m.role === 'owner') || null;
+        const otherMembers = members.filter(m => m.role !== 'owner');
+        return { leader, otherMembers };
+    }, [members]);
 
     return (
         <Box sx={{ mt: 4, ml: '18%', maxWidth: '50%' }}>
@@ -50,7 +57,7 @@ function ProjectHeader({ project }) {
                         Leader
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {project.leader?.name || '-'}
+                        {leader?.name || '-'}
                     </Typography>
                 </Box>
 
@@ -59,7 +66,9 @@ function ProjectHeader({ project }) {
                         Members
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {members || '-'}
+                        {otherMembers.length > 0
+                            ? otherMembers.map(m => m.name).join(', ')
+                            : '-'}
                     </Typography>
                 </Box>
             </Stack>
