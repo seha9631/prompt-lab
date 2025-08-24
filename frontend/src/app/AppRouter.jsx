@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import PATH from './path';
 
 import Home from '../pages/Home';
-import Project from '../pages/Project';
+import Project from '../pages/project/Project';
 import Projects from '../pages/Projects';
 import NewProject from '../pages/NewProject'
 import My from '../pages/My';
