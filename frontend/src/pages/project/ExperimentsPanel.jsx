@@ -14,7 +14,7 @@ import {
     TableCell,
 } from '@mui/material';
 
-function ExperimentsPanel({ cases = [], onRunCase }) {
+function ExperimentsPanel({ cases = [], onRunCase, models }) {
     return (
         <Stack spacing={3} sx={{ mt: 8, mb: 8, width: '60%', mx: 'auto' }}>
             <Typography variant="h6" fontWeight={800}>
@@ -26,10 +26,21 @@ function ExperimentsPanel({ cases = [], onRunCase }) {
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
                         Model
                     </Typography>
-                    <Select size="small" fullWidth defaultValue="gpt-4o">
-                        <MenuItem value="gpt-4o">gpt-4o</MenuItem>
-                        <MenuItem value="gpt-4.1-mini">gpt-4.1-mini</MenuItem>
-                        <MenuItem value="gpt-4o-mini">gpt-4o-mini</MenuItem>
+                    <Select
+                        size="small"
+                        fullWidth
+                        displayEmpty
+                        defaultValue={models[0]?.name ?? ''}
+                    >
+                        {models.length === 0 ? (
+                            <MenuItem value="" disabled>No models</MenuItem>
+                        ) : (
+                            models.map(m => (
+                                <MenuItem key={m.id} value={m.name}>
+                                    {m.description ? ` (${m.description})` : ''}
+                                </MenuItem>
+                            ))
+                        )}
                     </Select>
                 </Box>
 

@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useAuthContext } from '../../app/providers/AuthProvider';
+
 import { getProjects } from '../../features/project/api/project';
 import { getTeamUsers } from '../../features/team/api/team';
-import { useAuthContext } from '../../app/providers/AuthProvider';
+import { getCredentials } from '../../features/credential/api/credential';
+import { getSourceModels } from '../../features/source/api/source';
+
 import ProjectHeader from './ProjectHeader';
 import StageStepper from './StageStepper';
 import TestCasesPanel from './TestCasesPanel';
@@ -9,24 +13,58 @@ import ExperimentsPanel from './ExperimentsPanel';
 
 function Project() {
     const { accessToken } = useAuthContext();
+
     const [project, setProject] = useState(null);
     const [members, setMembers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [models, setModels] = useState([]);
+
     const [cases, setCases] = useState([{ id: '', request: '', expected: '' }]);
     const [stage, setStage] = useState(0);
 
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     useEffect(() => {
         if (!accessToken) return;
+
         (async () => {
             try {
-                const list = await getProjects();
-                const p = list[0] ?? null;
+                setLoading(true);
+
+                const projList = await getProjects();
+                const p = projList[0] ?? null;
                 setProject(p);
-                if (p?.team_id) {
-                    const users = await getTeamUsers(p.team_id);
-                    setMembers(users);
+                if (!p) return;
+
+                const tasks = [];
+
+                if (p.team_id) {
+                    tasks.push(
+                        getTeamUsers(p.team_id)
+                            .then(users => setMembers(users))
+                            .catch(() => setMembers([]))
+                    );
                 }
+
+                tasks.push(
+                    (async () => {
+                        const creds = await getCredentials();
+                        if (!Array.isArray(creds) || creds.length === 0) {
+                            setModels([]);
+                            return;
+                        }
+                        const all = [];
+
+                        for (const cred of creds) {
+                            if (!cred.source_id) continue;
+                            const ms = await getSourceModels(cred.source_id);
+                            if (Array.isArray(ms)) all.push(...ms);
+                        }
+                        setModels(all);
+                    })().catch(() => setModels([]))
+                );
+
+                await Promise.all(tasks);
             } catch (e) {
                 setError(e?.response?.data ?? e);
             } finally {
@@ -45,7 +83,7 @@ function Project() {
             <ProjectHeader project={project} members={members} />
             <StageStepper value={stage} onChange={setStage} />
             {stage === 0 && <TestCasesPanel cases={cases} setCases={setCases} />}
-            {stage === 1 && <ExperimentsPanel cases={cases} />}
+            {stage === 1 && <ExperimentsPanel cases={cases} models={models} />}
             {stage === 2 && <div>Results Panel</div>}
         </div>
     );
