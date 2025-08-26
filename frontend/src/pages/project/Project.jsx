@@ -17,6 +17,7 @@ function Project() {
     const [project, setProject] = useState(null);
     const [members, setMembers] = useState([]);
     const [models, setModels] = useState([]);
+    const [credentials, setCredentials] = useState([]);
 
     const [cases, setCases] = useState([{ id: '', request: '', expected: '' }]);
     const [stage, setStage] = useState(0);
@@ -49,6 +50,7 @@ function Project() {
                 tasks.push(
                     (async () => {
                         const creds = await getCredentials();
+                        setCredentials(Array.isArray(creds) ? creds : []);
                         if (!Array.isArray(creds) || creds.length === 0) {
                             setModels([]);
                             return;
@@ -83,7 +85,14 @@ function Project() {
             <ProjectHeader project={project} members={members} />
             <StageStepper value={stage} onChange={setStage} />
             {stage === 0 && <TestCasesPanel cases={cases} setCases={setCases} />}
-            {stage === 1 && <ExperimentsPanel cases={cases} models={models} />}
+            {stage === 1 &&
+                <ExperimentsPanel
+                    cases={cases}
+                    models={models}
+                    credentialName={credentials[0].name}
+                    projectId={project.id}
+                />
+            }
             {stage === 2 && <div>Results Panel</div>}
         </div>
     );
