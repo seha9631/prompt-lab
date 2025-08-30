@@ -1,7 +1,7 @@
 const PATH = {
   HOME: '/',
   PROJECTS:'/projects',
-  PROJECT:'/project',
+  PROJECT:'/project/:projectId',
   NEWPROJECT:'/newproject',
   MY: '/my',
   NOT_FOUND: '*',

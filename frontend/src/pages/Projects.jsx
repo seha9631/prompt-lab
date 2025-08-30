@@ -15,11 +15,15 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { getProjects } from '../features/project/api/project';
 import { useAuthContext } from '../app/providers/AuthProvider';
 
-function ProjectCard({ project, onClick }) {
+function ProjectCard({ project }) {
     const desc = project.description ?? '';
     return (
         <Card variant="outlined" sx={{ bgcolor: 'background.paper', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 2, height: 220 }}>
-            <CardActionArea onClick={() => onClick?.(project)} sx={{ height: '100%', p: 1.5 }}>
+            <CardActionArea
+                component={RouterLink}
+                to={`/project/${project.id}`}
+                sx={{ height: '100%', p: 1.5 }}
+            >
                 <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <Stack direction="row" alignItems="center" justifyContent="space-between">
                         <Typography variant="subtitle1" fontWeight={800}>{project.name}</Typography>
@@ -33,7 +37,6 @@ function ProjectCard({ project, onClick }) {
 }
 
 function Projects({
-    onOpenProject,
     pageSize: pageSizeProp = 6,
 }) {
     const { accessToken } = useAuthContext();
@@ -334,7 +337,7 @@ function Projects({
                     }}
                 >
                     {visible.map((p) => (
-                        <ProjectCard key={p.id} project={p} onClick={(proj) => onOpenProject?.(proj)} />
+                        <ProjectCard key={p.id} project={p} />
                     ))}
                 </Box>
 

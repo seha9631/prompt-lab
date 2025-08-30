@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuthContext } from '../../app/providers/AuthProvider';
 
 import { getProjects } from '../../features/project/api/project';
@@ -13,6 +14,7 @@ import ExperimentsPanel from './ExperimentsPanel';
 
 function Project() {
     const { accessToken } = useAuthContext();
+    const { projectId } = useParams();
 
     const [project, setProject] = useState(null);
     const [members, setMembers] = useState([]);
@@ -33,7 +35,8 @@ function Project() {
                 setLoading(true);
 
                 const projList = await getProjects();
-                const p = projList[0] ?? null;
+                const p = Array.isArray(projList) ? projList.find(x => x.id === projectId) ?? null : null;
+
                 setProject(p);
                 if (!p) return;
 
@@ -73,12 +76,12 @@ function Project() {
                 setLoading(false);
             }
         })();
-    }, [accessToken]);
+    }, [accessToken, projectId]);
 
     if (!accessToken) return <div>Signing in...</div>;
     if (loading) return <div>Loading projects...</div>;
     if (error) return <div style={{ color: 'red' }}>Error: {JSON.stringify(error)}</div>;
-    if (!project) return <div>No projects found.</div>;
+    if (!project) return <div>Project not found.</div>;
 
     return (
         <div>
@@ -89,7 +92,7 @@ function Project() {
                 <ExperimentsPanel
                     cases={cases}
                     models={models}
-                    credentialName={credentials[0].name}
+                    credentialName={credentials[0]?.name ?? ''}
                     projectId={project.id}
                 />
             }
