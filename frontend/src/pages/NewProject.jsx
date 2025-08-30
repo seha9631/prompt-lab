@@ -1,32 +1,53 @@
 import { useState, useMemo } from 'react';
-import {
-    Box, Stack, Typography, TextField, Button, FormHelperText, Divider
-} from '@mui/material';
+import { Box, Stack, Typography, TextField, Button, FormHelperText, Divider } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { useNavigate } from 'react-router-dom';
+import { createProject } from '../features/project/api/project';
 
-function NewProject({ onCreate }) {
+function NewProject() {
+    const navigate = useNavigate();
+
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [apiError, setApiError] = useState('');
+
     const MAX_DESC = 350;
 
-    const nameError =
+    const nameErrorClient =
         name.trim().length === 0
             ? ''
             : name.trim().length < 2
                 ? '프로젝트 이름은 2자 이상이어야 합니다.'
                 : '';
 
-    const canSubmit = useMemo(() => {
-        return name.trim().length >= 2 && !nameError;
-    }, [name, nameError]);
+    const nameError = apiError || nameErrorClient;
 
-    const handleSubmit = (e) => {
+    const canSubmit = useMemo(() => {
+        return !!name.trim() && !nameErrorClient && !submitting;
+    }, [name, nameErrorClient, submitting]);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!canSubmit) return;
-        onCreate?.({
-            name: name.trim(),
-            description: desc.trim(),
-        });
+
+        try {
+            setSubmitting(true);
+            setApiError('');
+
+            const res = await createProject({ name: name.trim() });
+            if (res?.success && res?.data?.id) {
+                navigate(`/project/${res.data.id}`);
+            } else {
+                setApiError('프로젝트 생성에 실패했습니다. 다시 시도해 주세요.');
+            }
+        } catch (err) {
+            const detail = err?.response?.data?.detail;
+            const message = detail?.message || '프로젝트 생성 중 오류가 발생했습니다.';
+            setApiError(message);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -42,19 +63,8 @@ function NewProject({ onCreate }) {
                 justifyContent: 'center',
             }}
         >
-            <Stack
-                spacing={4}
-                sx={{
-                    width: '100%',
-                    maxWidth: 720,
-                }}
-            >
-                <Typography
-                    variant="h4"
-                    align="center"
-                    fontWeight={800}
-                    sx={{ mb: 2 }}
-                >
+            <Stack spacing={4} sx={{ width: '100%', maxWidth: 720 }}>
+                <Typography variant="h4" align="center" fontWeight={800} sx={{ mb: 2 }}>
                     Create a new project
                 </Typography>
 
@@ -66,23 +76,20 @@ function NewProject({ onCreate }) {
                     </Typography>
                     <TextField
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder=""
+                        onChange={(e) => {
+                            setName(e.target.value);
+                            if (apiError) setApiError('');
+                        }}
                         fullWidth
                         size="medium"
                         error={!!nameError}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                bgcolor: 'background.default',
-                            },
-                        }}
+                        sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'background.default' } }}
                     />
-
-                    {nameError && (
+                    {!!nameError && (
                         <Stack direction="row" alignItems="center" spacing={0.5}>
                             <CloseRoundedIcon fontSize="small" sx={{ color: 'error.main' }} />
                             <FormHelperText sx={{ color: 'error.main', ml: 0 }}>
-                                {nameError || '프로젝트 이름 검증 내용 출력'}
+                                {nameError}
                             </FormHelperText>
                         </Stack>
                     )}
@@ -102,17 +109,12 @@ function NewProject({ onCreate }) {
                         multiline
                         minRows={6}
                         fullWidth
-                        placeholder=""
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                bgcolor: 'background.default',
-                            },
-                        }}
                         helperText={
                             <Box sx={{ width: '100%', textAlign: 'right', opacity: 0.7 }}>
                                 {desc.length}/{MAX_DESC}
                             </Box>
                         }
+                        sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'background.default' } }}
                     />
                 </Stack>
 
@@ -123,16 +125,9 @@ function NewProject({ onCreate }) {
                         color="primary"
                         size="large"
                         disabled={!canSubmit}
-                        sx={{
-                            px: 4,
-                            py: 1.5,
-                            fontWeight: 800,
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            minWidth: 260,
-                        }}
+                        sx={{ px: 4, py: 1.5, fontWeight: 800, borderRadius: 2, textTransform: 'none', minWidth: 260 }}
                     >
-                        Create Project
+                        {submitting ? 'Creating...' : 'Create Project'}
                     </Button>
                 </Box>
             </Stack>
