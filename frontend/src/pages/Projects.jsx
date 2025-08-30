@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -31,8 +32,7 @@ function ProjectCard({ project, onClick }) {
     );
 }
 
-export default function ProjectsPage({
-    onCreate,
+function Projects({
     onOpenProject,
     pageSize: pageSizeProp = 6,
 }) {
@@ -266,7 +266,8 @@ export default function ProjectsPage({
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={onCreate}
+                        component={RouterLink}
+                        to="/NewProject"
                         sx={{ height: 36, textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2 }}
                     >
                         New project
@@ -365,3 +366,5 @@ export default function ProjectsPage({
         </LocalizationProvider>
     );
 }
+
+export default Projects;
